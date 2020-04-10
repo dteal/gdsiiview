@@ -1,0 +1,2 @@
+# exclude compiled binaries
+bin/*

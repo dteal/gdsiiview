@@ -1,0 +1,33 @@
+gdsii: "example.gds"
+    comment: example part 1
+    transform:
+        comment: rotate the part!
+        rotate: z 45
+        translate: 0 0 0
+    layer: 1
+        comment: substrate
+        zbounds: -500 0
+        color: 100 150 100
+        stl: "example_bottom.stl"
+    layer: 2
+        zbounds: 0 100
+        color: 0 50 255
+        stl: "example_middle.stl"
+    layer: 3
+        zbounds: 100 150
+        color: 255 255 0
+        stl: "example_text.stl"
+gdsii: "example.gds"
+    comment: example part 2
+    transform:
+        rotate: x 90 
+        translate: 0 0 1.0
+    layer: 1
+        zbounds: -500 0
+        color: 100 100 100
+    layer: 2
+        zbounds: 0 100
+        color: 0 200 50
+    layer: 3
+        zbounds: 100 150
+        color: 100 0 100
