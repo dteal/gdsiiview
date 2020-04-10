@@ -1,5 +1,6 @@
 #include "gdsii.h"
 
 int main(){
-    read("test/test.gds");
+    GDSII* gdsii = gdsii_read("test/test.gds");
+    gdsii_free(gdsii);
 }
