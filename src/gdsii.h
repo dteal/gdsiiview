@@ -172,6 +172,7 @@ void gdsii_delete_element(GDSII_ELEMENT* element){
 GDSII_STRUCTURE* gdsii_create_structure(){
     GDSII_STRUCTURE* structure;
     structure = (GDSII_STRUCTURE*)malloc(sizeof(GDSII_STRUCTURE));
+    (*structure).name = NULL;
     (*structure).element = NULL;
     (*structure).next = NULL;
     return structure;
@@ -180,6 +181,9 @@ GDSII_STRUCTURE* gdsii_create_structure(){
 void gdsii_delete_structure(GDSII_STRUCTURE* structure){
     while(structure != NULL){
         gdsii_delete_element((*structure).element);
+        if((*structure).name != NULL){
+            free((*structure).name);
+        }
         GDSII_STRUCTURE* next = (*structure).next;
         free(structure);
         structure = next;
@@ -235,9 +239,23 @@ std::vector<REAL64> parse_real64(uint8_t* data, uint16_t length){
 }
 */
 
-char* gdsii_parse_string(uint8_t* data, uint16_t length){
-    char* text = (char*)malloc(sizeof(char)*length);
-    strcpy(text, (char*)data);
+char* gdsii_parse_string(uint8_t* , uint16_t ){
+    char* text = NULL;
+    text = (char*)malloc(sizeof(char)*5);
+    for(unsigned int i=0; i<4; i++){
+        text[i] = 'a';
+    }
+    text[4] = 0x00;
+    //free(text);
+    /*
+    text[0] = 'h';
+    text[1] = 'e';
+    text[2] = 'l';
+    text[3] = 'l';
+    text[4] = 'o';
+    */
+    //strcpy(text, (char*)data);
+    //return text;
     return text;
 }
 
@@ -248,8 +266,9 @@ bool gdsii_read(GDSII* gdsii, const char* filepath){
     FILE* file = fopen(filepath, "r");
     if(file == NULL){ perror("Error! Could not read GDS file."); return false; }
 
-    //GDSII_STRUCTURE* structure = (*gdsii).structure;
-    //GDSII_ELEMENT* element = NULL;
+    // end of structure linked list
+    GDSII_STRUCTURE** structure = &((*gdsii).structure);
+    GDSII_ELEMENT** element = NULL;
 
     while(true){
 
@@ -262,7 +281,7 @@ bool gdsii_read(GDSII* gdsii, const char* filepath){
         uint16_t length = (buffer[0] << 1) + buffer[1] - 4; // length of data, not entire record
         uint8_t record_type = buffer[2];
         uint8_t data_type = buffer[3];
-        std::cout << "RECORD: length: " << (int)(length+4) << " type: " << (int)record_type << " data: " << (int)data_type << std::endl;
+        //std::cout << "RECORD: length: " << (int)(length+4) << " type: " << (int)record_type << " data: " << (int)data_type << std::endl;
 
         // read record data
         uint8_t* data = nullptr;
@@ -273,50 +292,49 @@ bool gdsii_read(GDSII* gdsii, const char* filepath){
 
         switch(record_type){
             case RECORD_TYPE_UNITS:
-                //printf("units\n");
+                printf("units\n");
                 break;
-            case RECORD_TYPE_BGNSTR:
-                //printf("structure begin\n");
-                /*
-                if(first_structure){ first_structure = false; }else{
-                    (*structure).next = (GDSII_STRUCTURE*)malloc(sizeof(GDSII_STRUCTURE));
-                    structure = structure->next;
-                    element = (GDSII_ELEMENT*)malloc(sizeof(GDSII_ELEMENT));
-                    (*structure).element = element; }
-                */
+            case RECORD_TYPE_BGNSTR: // create new structure
+                printf("structure\n");
+                (*structure) = gdsii_create_structure();
+                element = &((**structure).element);
                 break;
-            case RECORD_TYPE_ENDSTR:
-                printf("structure end\n");
+            case RECORD_TYPE_ENDSTR: // move marker to new end of linked list
+                structure = &((**structure).next);
                 break;
-            case RECORD_TYPE_STRNAME:
-                printf("structure name: ");
+            case RECORD_TYPE_STRNAME: // assume data is null-terminated
+                (**structure).name = gdsii_parse_string(data, length);
                 break;
-            case RECORD_TYPE_ENDEL:
-                printf("\tendel\n");
+            case RECORD_TYPE_ENDEL: // end element
+                element = &((**element).next);
                 break;
             case RECORD_TYPE_BOUNDARY:
-                printf("\tboundary\n");
+                (*element) = gdsii_create_element();
+                (**element).type = ELEMENT_TYPE_BOUNDARY;
                 break;
             case RECORD_TYPE_PATH:
-                printf("\tpath\n");
+                (*element) = gdsii_create_element();
+                (**element).type = ELEMENT_TYPE_PATH;
                 break;
             case RECORD_TYPE_SREF:
-                printf("\tsref\n");
+                (*element) = gdsii_create_element();
+                (**element).type = ELEMENT_TYPE_SREF;
                 break;
             case RECORD_TYPE_AREF:
-                printf("\taref\n");
+                (*element) = gdsii_create_element();
+                (**element).type = ELEMENT_TYPE_AREF;
                 break;
             case RECORD_TYPE_BOX:
-                printf("\tbox\n");
+                (*element) = gdsii_create_element();
+                (**element).type = ELEMENT_TYPE_BOX;
                 break;
             case RECORD_TYPE_XY:
                 printf("\t\txy\n");
-                /*
                 if(data_type == DATA_TYPE_INT32){
-                    std::vector<int32_t>coordinates = parse_int32(data, length);
+                    std::vector<int32_t>coordinates = gdsii_parse_int32(data, length);
                     assert(coordinates.size()%2==0);
-                    (*element).xy = (GDSII_POINT*)malloc(sizeof(GDSII_POINT));
-                    GDSII_POINT* point = (*element).xy;
+                    (**element).xy = (GDSII_POINT*)malloc(sizeof(GDSII_POINT));
+                    GDSII_POINT* point = (**element).xy;
                     bool first_point = true;
                     for(unsigned int i=0; i<coordinates.size()/2; i++){
                         if(first_point){ first_point = false; }else{
@@ -327,16 +345,12 @@ bool gdsii_read(GDSII* gdsii, const char* filepath){
                         (*point).next = NULL;
                     }
                 }
-                */
                 break;
             case RECORD_TYPE_LAYER:
-                printf("\t\tlayer\n");
-                /*
                 if(data_type == DATA_TYPE_INT16){
                     std::vector<int16_t>points = gdsii_parse_int16(data, length);
-                    (*element).layer = points[0];
+                    (**element).layer = points[0];
                 }
-                */
                 break;
         }
 
