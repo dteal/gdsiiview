@@ -8,6 +8,7 @@
 #include <vector>
 #include <ctime>
 #include "mesh.h"
+#include "gdsii.h"
 
 class Part{
 public:
@@ -18,12 +19,14 @@ std::time_t config_write_time;
 
 std::vector<std::shared_ptr<Mesh>>meshes;
 std::string filepath = "";
+GDSII* gdsii;
 glm::mat4 transform = glm::mat4(1.0f);
 
 Part(){}
 
 ~Part(){
     if(initialized){
+        gdsii_delete_gdsii(gdsii);
     }
 }
 
@@ -36,7 +39,11 @@ void initialize(){
 
     std::cout << "Initializing part \"" << filepath << "\"" << std::endl;
 
+    gdsii = gdsii_create_gdsii();
+    gdsii_read(gdsii, filepath.c_str());
+
     for(unsigned int i=0; i<meshes.size(); i++){
+        meshes[i]->gdsii = gdsii;
         meshes[i]->initialize();
     }
 
@@ -52,11 +59,11 @@ void render(glm::mat4 transform){
 void update(){
     std::time_t current_config_write_time = boost::filesystem::last_write_time(config_filepath);
     if(current_config_write_time > config_write_time){
-        // re-initialize this part
+        // TODO: re-initialize this part
         std::cout << "File \"" << filepath << "\" updated; reloading..." << std::endl;
         config_write_time = current_config_write_time;
         for(unsigned int i=0; i<meshes.size(); i++){
-            // re-initialize meshes
+            // TODO: re-initialize meshes
         }
     }
 }

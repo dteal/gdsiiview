@@ -15,7 +15,7 @@ glm::vec2 screen_size = glm::vec2(0.0f, 0.0f);
 bool orbiting = false;
 float theta = 0.0f; // camera angle, degrees
 float phi = M_PI/2.0f; // camera angle, degrees
-float zoom = 0.1f;
+float zoom = 0.001f;
 std::string config_filepath;
 std::time_t config_write_time;
 
@@ -56,7 +56,7 @@ void cursor_scroll_callback(GLFWwindow*, double, double y){
     }
 }
 
-GLFWwindow* initialize_window(){
+GLFWwindow* initialize_window(std::string name){
     GLFWwindow* window;
     glfwSetErrorCallback(glfw_error_callback);
     if(!glfwInit()){
@@ -65,7 +65,7 @@ GLFWwindow* initialize_window(){
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    window = glfwCreateWindow(500, 500, "3D GDS View", NULL, NULL);
+    window = glfwCreateWindow(500, 500, name.c_str(), NULL, NULL);
     if(!window){
         glfwTerminate();
         std::cout << "Error creating GLFW window" << std::endl;
@@ -183,7 +183,7 @@ int main(int argc, char* argv[]){
         return 0;
     }
 
-    GLFWwindow* window = initialize_window();
+    GLFWwindow* window = initialize_window(argv[1]);
     if(window==nullptr) return 1;
 
     // initialize all parts/meshes (e.g., open files, tesselate...)

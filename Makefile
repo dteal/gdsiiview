@@ -1,5 +1,5 @@
 COMPILER = g++
-COMPILERFLAGS = -std=c++11 -Wall -Wextra -Wpedantic -Werror -O2
+COMPILERFLAGS = -std=c++11 -Wall -Wextra -Wpedantic -Werror -O1
 INCLUDEFLAGS =
 LINKERFLAGS = -lglfw -lGL -lGLEW -Iglm -ltriangle -lboost_system -lboost_filesystem
 
