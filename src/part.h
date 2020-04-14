@@ -24,12 +24,6 @@ glm::mat4 transform = glm::mat4(1.0f);
 
 Part(){}
 
-~Part(){
-    if(initialized){
-        gdsii_delete_gdsii(gdsii);
-    }
-}
-
 void initialize(){
     if(!boost::filesystem::exists(filepath) || boost::filesystem::is_directory(filepath)){
         std::cout << "Error: filepath \"" << filepath << "\" not valid" << std::endl;
@@ -50,6 +44,22 @@ void initialize(){
     initialized = true;
 }
 
+void deinitialize(){
+    gdsii_delete_gdsii(gdsii);
+    for(unsigned int i=0; i<meshes.size(); i++){
+        meshes[i]->gdsii = gdsii;
+        meshes[i]->deinitialize();
+    }
+
+    initialized = true;
+}
+
+~Part(){
+    if(initialized){
+        deinitialize();
+    }
+}
+
 void render(glm::mat4 transform){
     for(unsigned int i=0; i<meshes.size(); i++){
         meshes[i]->render(transform * this->transform);
@@ -59,12 +69,13 @@ void render(glm::mat4 transform){
 void update(){
     std::time_t current_config_write_time = boost::filesystem::last_write_time(config_filepath);
     if(current_config_write_time > config_write_time){
-        // TODO: re-initialize this part
+        deinitialize();
+        initialize();
         std::cout << "File \"" << filepath << "\" updated; reloading..." << std::endl;
         config_write_time = current_config_write_time;
-        for(unsigned int i=0; i<meshes.size(); i++){
+        /*for(unsigned int i=0; i<meshes.size(); i++){
             // TODO: re-initialize meshes
-        }
+        }*/
     }
 }
 

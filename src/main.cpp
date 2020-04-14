@@ -12,6 +12,16 @@
 
 glm::vec2 cursor_position = glm::vec2(0.0f, 0.0f);
 glm::vec2 screen_size = glm::vec2(0.0f, 0.0f);
+
+glm::vec3 camera_position = glm::vec3(-1000.0f, 0.0f, 0.0f);
+glm::vec3 camera_direction = glm::vec3(1.0f, 0.0f, 0.0f);
+glm::vec3 camera_up = glm::vec3(0.0f, 0.0f, 1.0f);
+/*
+ * pan: move camera perpendicular to camera_direction (x/y)
+ * zoom: move camera along camera_direction
+ * rotate: rotate camera around center of screen?
+ */
+
 bool orbiting = false;
 float theta = 0.0f; // camera angle, degrees
 float phi = M_PI/2.0f; // camera angle, degrees
