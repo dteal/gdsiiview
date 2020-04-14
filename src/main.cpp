@@ -13,9 +13,11 @@
 glm::vec2 cursor_position = glm::vec2(0.0f, 0.0f);
 glm::vec2 screen_size = glm::vec2(0.0f, 0.0f);
 
+/*
 glm::vec3 camera_position = glm::vec3(-1000.0f, 0.0f, 0.0f);
 glm::vec3 camera_direction = glm::vec3(1.0f, 0.0f, 0.0f);
 glm::vec3 camera_up = glm::vec3(0.0f, 0.0f, 1.0f);
+*/
 /*
  * pan: move camera perpendicular to camera_direction (x/y)
  * zoom: move camera along camera_direction
@@ -23,9 +25,9 @@ glm::vec3 camera_up = glm::vec3(0.0f, 0.0f, 1.0f);
  */
 
 bool orbiting = false;
-float theta = 0.0f; // camera angle, degrees
+float theta = 45.0f; // camera angle, degrees
 float phi = M_PI/2.0f; // camera angle, degrees
-float zoom = 0.001f;
+float zoom = 0.0005f;
 std::string config_filepath;
 std::time_t config_write_time;
 
@@ -140,6 +142,8 @@ bool parse_configuration(std::string filepath){
                     ss << line[i];
             }
         }
+        if(commands.size() == 0){continue;} // tolerate blank lines
+        if(commands[0][0] == '#'){continue;} // comments
         // apply commands
         if(commands[0] == "gdsii:"){
             if(temppart->created){
@@ -201,6 +205,13 @@ int main(int argc, char* argv[]){
     for(unsigned int i=0; i<parts.size(); i++){
         parts[i]->initialize();
     }
+
+
+    // change screen size once for initial frame
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    glViewport(0, 0, width, height);
+    screen_size = glm::vec2(width, height);
 
     while(!glfwWindowShouldClose(window)){
         // watch configuration file for updates
