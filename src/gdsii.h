@@ -239,23 +239,14 @@ std::vector<REAL64> parse_real64(uint8_t* data, uint16_t length){
 }
 */
 
-char* gdsii_parse_string(uint8_t* , uint16_t ){
+char* gdsii_parse_string(uint8_t* data, uint16_t length){
+    // data is not necessarily null-terminated
     char* text = NULL;
-    text = (char*)malloc(sizeof(char)*5);
-    for(unsigned int i=0; i<4; i++){
-        text[i] = 'a';
+    text = (char*)malloc(sizeof(char)*(length+1));
+    for(unsigned int i=0; i<length; i++){
+        text[i] = data[i];
     }
-    text[4] = 0x00;
-    //free(text);
-    /*
-    text[0] = 'h';
-    text[1] = 'e';
-    text[2] = 'l';
-    text[3] = 'l';
-    text[4] = 'o';
-    */
-    //strcpy(text, (char*)data);
-    //return text;
+    text[length] = 0x00;
     return text;
 }
 
@@ -304,6 +295,7 @@ bool gdsii_read(GDSII* gdsii, const char* filepath){
                 break;
             case RECORD_TYPE_STRNAME: // assume data is null-terminated
                 (**structure).name = gdsii_parse_string(data, length);
+                std::cout << (**structure).name << std::endl;
                 break;
             case RECORD_TYPE_ENDEL: // end element
                 element = &((**element).next);
