@@ -31,7 +31,7 @@ void initialize(){
     config_filepath = filepath;
     config_write_time = boost::filesystem::last_write_time(filepath);
 
-    std::cout << "Initializing part \"" << filepath << "\"" << std::endl;
+    //std::cout << "Initializing part \"" << filepath << "\"" << std::endl;
 
     gdsii = gdsii_create_gdsii();
     gdsii_read(gdsii, filepath.c_str());

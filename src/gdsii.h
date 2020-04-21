@@ -284,8 +284,8 @@ bool gdsii_read(GDSII* gdsii, const char* filepath){
 
         switch(record_type){
             case RECORD_TYPE_UNITS:
-                printf("UNITS\n");
-                std::cout << (int)data_type << std::endl;
+                //printf("UNITS\n");
+                //std::cout << (int)data_type << std::endl;
                 break;
             case RECORD_TYPE_BGNSTR: // create new structure
                 //printf("STRUCTURE\n");

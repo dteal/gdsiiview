@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <memory>
+
 #include "shader.h"
 #include "gdsii.h"
 
@@ -35,8 +36,9 @@ const char* fragment_source = "                         \n\
         float diff1 = max(dot(light1, normal), 0.0);    \n\
         vec3 light2 = vec3(-0.70, -0.23, -0.58);        \n\
         float diff2 = max(dot(light2, normal), 0.0);    \n\
-        vec3 final = (diff1+diff2*0.5) * color;         \n\
+        vec3 final = 2*(diff1+diff2*0.5) * color;         \n\
         FragColor = vec4(final.xyz, 1.0f);              \n\
+        //FragColor = vec4(color.xyz, 1.0f);              \n\
     }";
 
 public:
@@ -51,9 +53,9 @@ GDSII* gdsii;
 unsigned int num_vertices = 0;
 
 void initialize(){
-    std::cout << "Mesh initialized with layer " << gdslayer << std::endl;
+    //std::cout << "Mesh initialized with layer " << gdslayer << std::endl;
     if(export_stl){
-        std::cout << "Exporting mesh to stl at " << stlfilepath << std::endl;
+        //std::cout << "Exporting mesh to stl at " << stlfilepath << std::endl;
     }
 
     std::vector<float> vertices;
@@ -86,9 +88,9 @@ void initialize(){
                     glm::vec2 n = glm::vec2(p2.y-p1.y, p1.x-p2.x);
                     n /= glm::length(n);
                     float z1 = zbounds[0]; float z2 = zbounds[1];
-                    float delta = 0.1/scale; // shift all vertices inward by less than a database unit
-                    p1 -= n*delta;
-                    p2 -= n*delta;
+                    //float delta = 0.1/scale; // shift all vertices inward by less than a database unit
+                    //p1 -= n*delta;
+                    //p2 -= n*delta;
                     float tris[] = {
                         p1.x, p1.y, z1, n.x, n.y, 0,
                         p2.x, p2.y, z1, n.x, n.y, 0,
@@ -109,6 +111,13 @@ void initialize(){
         }
         structure = structure->next;
     }
+
+    /*
+    char* triswitches = (char*)"z";
+    triangulateio *in = (triangulateio*)malloc(sizeof(triangulateio));
+    triangulateio *out = (triangulateio*)malloc(sizeof(triangulateio));
+    triangulate(triswitches, in, out, NULL);
+    */
 
     float* data = new float[vertices.size()];
     for(unsigned int i=0; i<vertices.size(); i++){

@@ -77,7 +77,7 @@ GLFWwindow* initialize_window(std::string name){
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    window = glfwCreateWindow(500, 500, name.c_str(), NULL, NULL);
+    window = glfwCreateWindow(800, 800, name.c_str(), NULL, NULL);
     if(!window){
         glfwTerminate();
         std::cout << "Error creating GLFW window" << std::endl;
