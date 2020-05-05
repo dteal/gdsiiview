@@ -54,42 +54,35 @@ Canvas::Canvas(){
 
     installEventFilter(this);
     setMouseTracking(true);
+
+    watcher = new QFileSystemWatcher(this);
+    connect(watcher, &QFileSystemWatcher::fileChanged, this, &Canvas::update_file);
 }
 
-Canvas::~Canvas(){}
+Canvas::~Canvas(){
+    delete watcher;
+}
 
 void Canvas::initializeGL(){
     initializeOpenGLFunctions();
+}
 
-    //if(argc < 2 || !parse_configuration(argv[1])){
-    //    std::cout << "Usage: gdsiiview example.gdsiiview" << std::endl;
-    //    return 0;
-    //}
+void Canvas::resizeGL(int width, int height){
+    screen_size = glm::vec2(width, height);
+    qDebug() << width << " " << height;
+}
 
-    // initialize all parts/meshes (e.g., open files, tesselate...)
-    // after OpenGL context is available
+void Canvas::paintGL(){
+    glClearColor(background_color.x, background_color.y, background_color.z, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     /*
     for(unsigned int i=0; i<parts.size(); i++){
         parts[i]->initialize();
     }
     */
-
-    // change screen size once for initial frame
-    //int width, height;
-    //glfwGetWindowSize(window, &width, &height);
-    //glViewport(0, 0, width, height);
-    //screen_size = glm::vec2(width, height);
 }
 
-void Canvas::resizeGL(int width, int height){
-    screen_size = glm::vec2(width, height);
-}
-
-void Canvas::paintGL(){
-    glClearColor(0.1f, 0.1f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
+// Handle mouse events
 bool Canvas::eventFilter(QObject*, QEvent* event){
     if(event->type() == QEvent::Enter){}
     if(event->type() == QEvent::Leave){ orbiting = false; }
@@ -116,15 +109,20 @@ bool Canvas::eventFilter(QObject*, QEvent* event){
     return false;
 }
 
-bool Canvas::parse_configuration(std::string filepath){
+bool Canvas::initialize_from_file(QString filepath){
+    if(filepath == ""){ return false; }
+    if(!(QFileInfo::exists(filepath) && QFileInfo(filepath).isFile())){ return false; }
+
+    qDebug() << "open: " << filepath;
+    this->filepath = filepath;
+    watcher->addPath(filepath);
+    watcher->files().removeDuplicates();
+
+    // TODO: need to delete previous parts
+
+    QString relativepath = QFileInfo(filepath).absolutePath();
+
     /*
-    if(!boost::filesystem::exists(filepath) || boost::filesystem::is_directory(filepath)){
-        std::cout << "Error: filepath \"" << filepath << "\" not valid" << std::endl; return false;
-    }
-    config_filepath = filepath;
-    config_write_time = boost::filesystem::last_write_time(filepath);
-    boost::filesystem::path relativepath(filepath);
-    relativepath = relativepath.parent_path();
     std::ifstream infile(filepath);
     std::string line;
     std::shared_ptr<Part>temppart = std::shared_ptr<Part>(new Part());
@@ -205,3 +203,20 @@ bool Canvas::parse_configuration(std::string filepath){
     */
     return true;
 }
+
+void Canvas::update_file(QString filepath){
+    if(filepath == this->filepath){
+        initialize_from_file(filepath);
+    }
+}
+void Canvas::file_open(){
+    QString filepath = QFileDialog::getOpenFileName(this, "Open *.gdsiiview File", "", "*.gdsiiview");
+    if(filepath != ""){ initialize_from_file(filepath); }}
+void Canvas::file_save(){
+    QString filepath = QFileDialog::getSaveFileName(this, "Save Image", "", "*.png");
+    // need to check whether path is empty and whether ".png" is at end of string
+    qDebug() << "save image: " << filepath; }
+void Canvas::view_fit(){ qDebug() << "fit"; }
+void Canvas::view_perspective(){ qDebug() << "perspective"; }
+void Canvas::view_orthographic(){ qDebug() << "ortho"; }
+void Canvas::view_orient(glm::vec3 direction, glm::vec3 up){ qDebug() << "orient"; }

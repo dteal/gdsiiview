@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QMenuBar>
 #include <QMenu>
-#include <QEvent>
+#include <QKeySequence>
 #include "canvas.h"
 
 class Window : public QMainWindow {

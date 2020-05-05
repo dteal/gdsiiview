@@ -10,5 +10,9 @@ int main(int argc, char *argv[]){
     window.setWindowTitle("GDSII 3D Viewer");
     window.show();
 
+    if(argc >= 2){
+        window.canvas->initialize_from_file(argv[1]);
+    }
+
     return app.exec();
 }

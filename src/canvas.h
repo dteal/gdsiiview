@@ -3,12 +3,17 @@
 
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
+#include <QFileSystemWatcher>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QMessageBox>
 #include <QDebug>
 #include <QEvent>
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QPoint>
 #include <memory>
+#include <iostream>
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 //#include "part.h"
@@ -34,10 +39,12 @@ public:
     float theta = 45.0f; // camera angle, degrees
     float phi = M_PI/2.0f; // camera angle, degrees
     float zoom = 0.0005f;
-    //std::string config_filepath;
-    //std::time_t config_write_time;
 
+    glm::vec3 background_color = glm::vec3(0.1f, 0.1f, 0.1f);
     //std::vector<std::shared_ptr<Part>>parts;
+
+    QString filepath = "";
+    QFileSystemWatcher* watcher;
 
     Canvas();
     ~Canvas();
@@ -47,9 +54,17 @@ public:
     void paintGL();
 
     bool eventFilter(QObject*, QEvent* event);
-    void cursor_scroll_callback();
 
-    bool parse_configuration(std::string filepath);
+    bool initialize_from_file(QString filepath);
+
+public slots:
+    void update_file(QString filepath);
+    void file_open();
+    void file_save();
+    void view_fit();
+    void view_perspective();
+    void view_orthographic();
+    void view_orient(glm::vec3 direction, glm::vec3 up);
 };
 
 #endif // CANVAS_H
