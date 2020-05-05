@@ -1,7 +1,7 @@
 #include "window.h"
 
 Window::Window(){
-    QMenuBar* menubar = new QMenuBar(0);
+    menubar = new QMenuBar(0);
     QMenu* file_menu = menubar->addMenu("&File");
     file_menu->addAction("&Open...");
     file_menu->addAction("&Save Image...");
@@ -22,6 +22,12 @@ Window::Window(){
     window_menu->addAction("Toggle &Menu Bar");
     setMenuBar(menubar);
 
-    Canvas* canvas = new Canvas();
+    canvas = new Canvas();
     setCentralWidget(canvas);
 }
+
+Window::~Window(){
+    delete menubar;
+    delete canvas;
+}
+

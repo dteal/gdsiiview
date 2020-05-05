@@ -18,6 +18,10 @@ SOURCES += \
 HEADERS += \
     src/canvas.h \
     src/window.h \
+    src/shader.h \
+    src/mesh.h \
+    src/part.h \
+    src/gdsii.h \
     src/thirdparty/triangle/triangle.h
 
 # For compilation of Triangle library:
