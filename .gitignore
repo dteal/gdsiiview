@@ -1,2 +1,2 @@
 # exclude compiled binaries
-build/*
+bin/*
