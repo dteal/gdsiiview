@@ -1,18 +1,20 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include <vector>
-#include <memory>
+#include <QOpenGLFunctions>
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLBuffer>
+#include <QOpenGLShaderProgram>
 
+#include <vector>
 #include "glm/glm.hpp"
-#include "shader.h"
 #include "gdsii.h"
 
-class Mesh{
+class Mesh : protected QOpenGLFunctions {
 private:
-unsigned int VAO;
-unsigned int VBO;
-std::shared_ptr<Shader>shader;
+    QOpenGLVertexArrayObject VAO;
+    QOpenGLBuffer VBO;
+    QOpenGLShaderProgram shader;
 
 // this is messy, but easier than separate files
 const char* vertex_source = "                           \n\
@@ -22,7 +24,8 @@ const char* vertex_source = "                           \n\
     uniform mat4 transform;                             \n\
     out vec3 normal;                                    \n\
     void main(){                                        \n\
-        gl_Position = transform * vec4(pos.xyz, 1.0f);  \n\
+        //gl_Position = transform * vec4(pos.xyz, 1.0f);  \n\
+        gl_Position = vec4(pos.xyz, 1.0f);  \n\
         normal = nor;                                   \n\
     }";
 const char* fragment_source = "                         \n\
@@ -35,9 +38,10 @@ const char* fragment_source = "                         \n\
         float diff1 = max(dot(light1, normal), 0.0);    \n\
         vec3 light2 = vec3(-0.70, -0.23, -0.58);        \n\
         float diff2 = max(dot(light2, normal), 0.0);    \n\
-        vec3 final = 2*(diff1+diff2*0.5) * color;         \n\
-        FragColor = vec4(final.xyz, 1.0f);              \n\
-        //FragColor = vec4(color.xyz, 1.0f);              \n\
+        vec3 final = 2*(diff1+diff2*0.5) * color;       \n\
+        //FragColor = vec4(final.xyz, 1.0f);              \n\
+        //FragColor = vec4(color.xyz, 1.0f);            \n\
+        FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);            \n\
     }";
 
 public:
@@ -51,7 +55,10 @@ std::string stlfilepath = "";
 GDSII* gdsii;
 unsigned int num_vertices = 0;
 
+Mesh() : VBO(QOpenGLBuffer::VertexBuffer) {}
+
 void initialize(){
+    initializeOpenGLFunctions();
     //std::cout << "Mesh initialized with layer " << gdslayer << std::endl;
     if(export_stl){
         //std::cout << "Exporting mesh to stl at " << stlfilepath << std::endl;
@@ -123,23 +130,36 @@ void initialize(){
         data[i] = vertices[i];
     }
     num_vertices = vertices.size()/6;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertices.size(), data, GL_STATIC_DRAW);
+
+    qDebug() << num_vertices;
+    VAO.create();
+    VAO.bind();
+    VBO.create();
+    VBO.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    VBO.bind();
+    VBO.allocate(data, sizeof(float)*vertices.size());
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertices.size(), data, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
-    shader = std::shared_ptr<Shader>(new Shader(vertex_source, fragment_source));
+    //shader = std::shared_ptr<Shader>(new Shader(vertex_source, fragment_source));
+    QOpenGLShader vertex_shader(QOpenGLShader::Vertex);
+    vertex_shader.compileSourceCode(vertex_source);
+    QOpenGLShader fragment_shader(QOpenGLShader::Fragment);
+    fragment_shader.compileSourceCode(fragment_source);
+    shader.addShader(&vertex_shader);
+    shader.addShader(&fragment_shader);
+    shader.link();
+    VAO.release();
+
     initialized = true;
     delete[] data;
 }
 
 void deinitialize(){
-    glDeleteBuffers(1, &VBO);
-    glDeleteVertexArrays(1, &VAO);
+    VBO.destroy();
+    VAO.destroy();
     initialized = false;
 }
 
@@ -152,12 +172,18 @@ void deinitialize(){
 
 // draw mesh
 void render(glm::mat4 view){
+    //glClearColor(0.0f, 0.5f, 0.0f, 1.0f);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if(initialized){
-        shader->use();
-        shader->set_mat4("transform", view);
-        shader->set_vec3("color", color);
-        glBindVertexArray(VAO);
+        qDebug() << "    drawing mesh..." << color.x << view[0][0];
+        shader.bind();
+        //shader->set_mat4("transform", view);
+        //shader->set_vec3("color", color);
+        VAO.bind();
+        VBO.bind();
+        //glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, num_vertices);
+        VAO.release();
     }
 }
 

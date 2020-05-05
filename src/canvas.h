@@ -11,13 +11,15 @@
 #include <QEvent>
 #include <QMouseEvent>
 #include <QWheelEvent>
+#include <QString>
 #include <QPoint>
 #include <memory>
 #include <iostream>
+#include <sstream>
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-//#include "part.h"
-//#include "mesh.h"
+#include "part.h"
+#include "mesh.h"
 
 extern "C" {
     #define ANSI_DECLARATORS
@@ -26,7 +28,7 @@ extern "C" {
     #include "triangle.h"
 }
 
-class Canvas : public QOpenGLWidget, public QOpenGLFunctions {
+class Canvas : public QOpenGLWidget, protected QOpenGLFunctions {
 public:
     glm::vec2 cursor_position = glm::vec2(0.0f, 0.0f);
     glm::vec2 screen_size = glm::vec2(0.0f, 0.0f);
@@ -41,7 +43,7 @@ public:
     float zoom = 0.0005f;
 
     glm::vec3 background_color = glm::vec3(0.1f, 0.1f, 0.1f);
-    //std::vector<std::shared_ptr<Part>>parts;
+    std::vector<std::shared_ptr<Part>>parts;
 
     QString filepath = "";
     QFileSystemWatcher* watcher;

@@ -50,7 +50,7 @@ Canvas::Canvas(){
     out.trianglelist = NULL;
     out.segmentlist = NULL;
     out.segmentmarkerlist = NULL;
-    triangulate((char*)"pzV", &in, &out, NULL);
+    //triangulate((char*)"pzV", &in, &out, NULL);
 
     installEventFilter(this);
     setMouseTracking(true);
@@ -75,11 +75,21 @@ void Canvas::resizeGL(int width, int height){
 void Canvas::paintGL(){
     glClearColor(background_color.x, background_color.y, background_color.z, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    /*
+
+    //transform XYZ device space to screen XY
+    glm::mat4 view;
+    view = glm::ortho(-0.5f*screen_size.x/screen_size.y, 0.5f*screen_size.x/screen_size.y, -0.5f, 0.5f, -100.0f, 100.0f);
+    view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    // camera rotate and zoom
+    view = glm::scale(view, glm::vec3(zoom, zoom, zoom));
+    view = glm::rotate(view, glm::radians(phi), glm::vec3(0.0f, 1.0f, 0.0f));
+    view = glm::rotate(view, glm::radians(theta), glm::vec3(0.0f, 0.0f, 1.0f));
+
     for(unsigned int i=0; i<parts.size(); i++){
-        parts[i]->initialize();
+        qDebug() << "rendering part " << i;
+        parts[i]->render(view);
     }
-    */
 }
 
 // Handle mouse events
@@ -97,14 +107,17 @@ bool Canvas::eventFilter(QObject*, QEvent* event){
         if(orbiting){
             theta += (((float)temppos.x()) - cursor_position.x);
             phi += (((float)temppos.y()) - cursor_position.y);
+            update();
         }
-        cursor_position = glm::vec2((float)temppos.x(), (float)temppos.y());}
+        cursor_position = glm::vec2((float)temppos.x(), (float)temppos.y());
+    }
     if(event->type() == QEvent::Wheel){
         if(((QWheelEvent*)event)->angleDelta().y()>0){
             zoom *= 1.05;
         }else{
             zoom /= 1.05;
         }
+        update();
     }
     return false;
 }
@@ -120,13 +133,13 @@ bool Canvas::initialize_from_file(QString filepath){
 
     // TODO: need to delete previous parts
 
-    QString relativepath = QFileInfo(filepath).absolutePath();
-
-    /*
-    std::ifstream infile(filepath);
-    std::string line;
     std::shared_ptr<Part>temppart = std::shared_ptr<Part>(new Part());
     std::shared_ptr<Mesh>tempmesh = std::shared_ptr<Mesh>(new Mesh());
+
+    QString relativepath = QFileInfo(filepath).absolutePath();
+    std::ifstream infile(filepath.toStdString());
+    std::string line;
+
     int linenumber = 0;
     // parse configuration file line by line
     while(std::getline(infile, line)){
@@ -164,7 +177,7 @@ bool Canvas::initialize_from_file(QString filepath){
                 parts.push_back(temppart);
             }
             temppart = std::shared_ptr<Part>(new Part());
-            temppart->filepath = (relativepath / commands[1]).c_str();
+            temppart->filepath = QDir(relativepath).filePath(QString(commands[1].c_str()));
             temppart->created = true;
         }else if(commands[0] == "comment:"){
         }else if(commands[0] == "transform:"){
@@ -190,7 +203,7 @@ bool Canvas::initialize_from_file(QString filepath){
             tempmesh->zbounds = glm::vec2(std::stof(commands[1]), std::stof(commands[2]));
         }else if(commands[0] == "stl:"){
             tempmesh->export_stl = true;
-            tempmesh->stlfilepath = (relativepath / commands[1]).c_str();
+            temppart->stlfilepath = QDir(relativepath).filePath(QString(commands[1].c_str()));
         }else{
             std::cout << "Error: could not parse configuration file line " << linenumber << std::endl;
         }
@@ -200,7 +213,12 @@ bool Canvas::initialize_from_file(QString filepath){
         if(tempmesh->created){ temppart->meshes.push_back(tempmesh); }
         parts.push_back(temppart);
     }
-    */
+
+    makeCurrent();
+    for(unsigned int i=0; i<parts.size(); i++){
+        parts[i]->initialize();
+    }
+    update();
     return true;
 }
 
