@@ -1,6 +1,6 @@
 #include "canvas.h"
 
-Canvas::Canvas(){
+Canvas::Canvas() : VBO(QOpenGLBuffer::VertexBuffer) {
     QSurfaceFormat format;
     format.setDepthBufferSize(24);
     format.setVersion(3, 3);
@@ -65,6 +65,39 @@ Canvas::~Canvas(){
 
 void Canvas::initializeGL(){
     initializeOpenGLFunctions();
+
+        VAO.create();
+        VBO.create();
+        VAO.bind();
+        VBO.setUsagePattern(QOpenGLBuffer::StaticDraw);
+        VBO.bind();
+        float points[]{
+            -1.0f, -1.0f, 0.0f,
+            1.0f, -1.0f, 0.0f,
+            0.0f, 1.0f, 0.0f
+        };
+        VBO.allocate(points, sizeof(float)*9);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+        VAO.release();
+
+        /*
+    QOpenGLShader vertex_shader(QOpenGLShader::Vertex);
+    vertex_shader.compileSourceCode(vertex_source);
+    qDebug() << vertex_shader.log();
+    QOpenGLShader fragment_shader(QOpenGLShader::Fragment);
+    fragment_shader.compileSourceCode(fragment_source);
+    qDebug() << fragment_shader.log();
+    shader.addShader(&vertex_shader);
+    shader.addShader(&fragment_shader);
+    *
+    */
+    shader.addShaderFromSourceCode(QOpenGLShader::Vertex, vertex_source);
+    shader.addShaderFromSourceCode(QOpenGLShader::Fragment, fragment_source);
+    shader.link();
+    qDebug() << shader.log();
+        //VAO.release();
+
 }
 
 void Canvas::resizeGL(int width, int height){
@@ -90,6 +123,12 @@ void Canvas::paintGL(){
         qDebug() << "rendering part " << i;
         parts[i]->render(view);
     }
+
+    shader.bind();
+    VAO.bind();
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    VAO.release();
+
 }
 
 // Handle mouse events

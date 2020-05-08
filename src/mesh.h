@@ -133,8 +133,8 @@ void initialize(){
 
     qDebug() << num_vertices;
     VAO.create();
-    VAO.bind();
     VBO.create();
+    VAO.bind();
     VBO.setUsagePattern(QOpenGLBuffer::StaticDraw);
     VBO.bind();
     VBO.allocate(data, sizeof(float)*vertices.size());
@@ -143,6 +143,8 @@ void initialize(){
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
+    VAO.release();
+
     //shader = std::shared_ptr<Shader>(new Shader(vertex_source, fragment_source));
     QOpenGLShader vertex_shader(QOpenGLShader::Vertex);
     vertex_shader.compileSourceCode(vertex_source);
@@ -151,7 +153,6 @@ void initialize(){
     shader.addShader(&vertex_shader);
     shader.addShader(&fragment_shader);
     shader.link();
-    VAO.release();
 
     initialized = true;
     delete[] data;
@@ -180,7 +181,6 @@ void render(glm::mat4 view){
         //shader->set_mat4("transform", view);
         //shader->set_vec3("color", color);
         VAO.bind();
-        VBO.bind();
         //glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, num_vertices);
         VAO.release();

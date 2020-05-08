@@ -48,6 +48,23 @@ public:
     QString filepath = "";
     QFileSystemWatcher* watcher;
 
+    QOpenGLVertexArrayObject VAO;
+    QOpenGLBuffer VBO;
+    QOpenGLShaderProgram shader;
+
+const char* vertex_source = "                           \n\
+    #version 330 core                                   \n\
+    layout (location = 0) in vec3 pos;                  \n\
+    void main(){                                        \n\
+        gl_Position = vec4(pos.xyz, 1.0f);  \n\
+    }";
+const char* fragment_source = "                         \n\
+    #version 330 core                                   \n\
+    out vec4 FragColor;                                 \n\
+    void main(){                                        \n\
+        FragColor = vec4(0.0f, 1.0f, 1.0f, 1.0f);            \n\
+    }";
+
     Canvas();
     ~Canvas();
 
