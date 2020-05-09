@@ -8,7 +8,15 @@
 
 #include <vector>
 #include "glm/glm.hpp"
+#include "glm/gtc/type_ptr.hpp"
 #include "gdsii.h"
+
+extern "C" {
+    #define ANSI_DECLARATORS
+    typedef double REAL;
+    typedef void VOID; // required on linux (maybe not Windows?)
+    #include "triangle.h"
+}
 
 class Mesh : protected QOpenGLFunctions {
 private:
@@ -24,8 +32,7 @@ const char* vertex_source = "                           \n\
     uniform mat4 transform;                             \n\
     out vec3 normal;                                    \n\
     void main(){                                        \n\
-        //gl_Position = transform * vec4(pos.xyz, 1.0f);  \n\
-        gl_Position = vec4(pos.xyz, 1.0f);  \n\
+        gl_Position = transform * vec4(pos.xyz, 1.0f);  \n\
         normal = nor;                                   \n\
     }";
 const char* fragment_source = "                         \n\
@@ -39,15 +46,15 @@ const char* fragment_source = "                         \n\
         vec3 light2 = vec3(-0.70, -0.23, -0.58);        \n\
         float diff2 = max(dot(light2, normal), 0.0);    \n\
         vec3 final = 2*(diff1+diff2*0.5) * color;       \n\
-        //FragColor = vec4(final.xyz, 1.0f);              \n\
+        FragColor = vec4(final.xyz, 1.0f);              \n\
         //FragColor = vec4(color.xyz, 1.0f);            \n\
-        FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);            \n\
+        //FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);            \n\
     }";
 
 public:
 bool created = false;
 bool initialized = false;
-glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
+glm::vec3 color = glm::vec3(1.0f, 0.5f, 1.0f);
 glm::vec2 zbounds = glm::vec2(-1.0f, 1.0f);
 int gdslayer = 1;
 bool export_stl = false;
@@ -111,6 +118,48 @@ void initialize(){
                     point = point->next;
                 }
 
+                    struct triangulateio in, out;
+    in.numberofpoints = 4;
+    in.numberofpointattributes = 0;
+    in.pointmarkerlist = NULL;
+    in.pointlist = (REAL *) malloc(in.numberofpoints * 2 * sizeof(REAL));
+    in.pointlist[0] = 0.0;
+    in.pointlist[1] = 0.0;
+    in.pointlist[2] = 1.0;
+    in.pointlist[3] = 0.0;
+    in.pointlist[4] = 1.0;
+    in.pointlist[5] = 10.0;
+    in.pointlist[6] = 0.0;
+    in.pointlist[7] = 10.0;
+    in.numberofsegments = 4;
+    in.segmentmarkerlist = NULL;
+    in.segmentlist = (int *) malloc(in.numberofsegments * 2 * sizeof(int));
+    in.segmentlist[0] = 0;
+    in.segmentlist[1] = 1;
+    in.segmentlist[2] = 1;
+    in.segmentlist[3] = 2;
+    in.segmentlist[4] = 2;
+    in.segmentlist[5] = 3;
+    in.segmentlist[6] = 3;
+    in.segmentlist[7] = 0;
+    in.numberofholes = 0;
+    in.holelist = NULL;
+    in.numberofregions = 0;
+    in.regionlist = NULL;
+    // need set of vertices, segments
+    // eventually, see which triangles border edge, on which side, etc...
+    // -p = planar straight line graph
+    // -z = number from zero
+    // -V = verbose
+    out.pointlist = NULL;
+    out.pointmarkerlist = NULL;
+    out.trianglelist = NULL;
+    out.segmentlist = NULL;
+    out.segmentmarkerlist = NULL;
+    triangulate((char*)"pzV", &in, &out, NULL);
+
+
+
                 // end polygon
             }
             element = element->next;
@@ -131,31 +180,24 @@ void initialize(){
     }
     num_vertices = vertices.size()/6;
 
-    qDebug() << num_vertices;
     VAO.create();
     VBO.create();
     VAO.bind();
     VBO.setUsagePattern(QOpenGLBuffer::StaticDraw);
     VBO.bind();
     VBO.allocate(data, sizeof(float)*vertices.size());
-    //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertices.size(), data, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
     VAO.release();
 
-    //shader = std::shared_ptr<Shader>(new Shader(vertex_source, fragment_source));
-    QOpenGLShader vertex_shader(QOpenGLShader::Vertex);
-    vertex_shader.compileSourceCode(vertex_source);
-    QOpenGLShader fragment_shader(QOpenGLShader::Fragment);
-    fragment_shader.compileSourceCode(fragment_source);
-    shader.addShader(&vertex_shader);
-    shader.addShader(&fragment_shader);
+    shader.addShaderFromSourceCode(QOpenGLShader::Vertex, vertex_source);
+    shader.addShaderFromSourceCode(QOpenGLShader::Fragment, fragment_source);
     shader.link();
 
-    initialized = true;
     delete[] data;
+    initialized = true;
 }
 
 void deinitialize(){
@@ -173,15 +215,13 @@ void deinitialize(){
 
 // draw mesh
 void render(glm::mat4 view){
-    //glClearColor(0.0f, 0.5f, 0.0f, 1.0f);
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if(initialized){
-        qDebug() << "    drawing mesh..." << color.x << view[0][0];
         shader.bind();
-        //shader->set_mat4("transform", view);
-        //shader->set_vec3("color", color);
+        unsigned int matlocation = glGetUniformLocation(shader.programId(), "transform");
+        glUniformMatrix4fv(matlocation, 1, GL_FALSE, glm::value_ptr(view));
+        unsigned int collocation = glGetUniformLocation(shader.programId(), "color");
+        glUniform3fv(collocation, 1, glm::value_ptr(color));
         VAO.bind();
-        //glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, num_vertices);
         VAO.release();
     }

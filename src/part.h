@@ -24,7 +24,6 @@ QFileSystemWatcher* watcher;
 std::vector<std::shared_ptr<Mesh>>meshes;
 GDSII* gdsii;
 glm::mat4 transform = glm::mat4(1.0f);
-
 Part(){
     watcher = new QFileSystemWatcher();
     connect(watcher, &QFileSystemWatcher::fileChanged, this, &Part::update_file);
@@ -69,7 +68,6 @@ void deinitialize(){
 
 void render(glm::mat4 transform){
     for(unsigned int i=0; i<meshes.size(); i++){
-        qDebug() << "    rendering mesh " << i;
         meshes[i]->render(transform * this->transform);
     }
 }

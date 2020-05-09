@@ -1,6 +1,6 @@
 #include "canvas.h"
 
-Canvas::Canvas() : VBO(QOpenGLBuffer::VertexBuffer) {
+Canvas::Canvas() {
     QSurfaceFormat format;
     format.setDepthBufferSize(24);
     format.setVersion(3, 3);
@@ -11,46 +11,6 @@ Canvas::Canvas() : VBO(QOpenGLBuffer::VertexBuffer) {
     glm::mat4 trans = glm::mat4(1.0f);
     trans = glm::scale(trans, glm::vec3(2.0f, 1.0f, 4.0f));
     qDebug() << (trans*glm::vec4(test, 1.0f)).x;
-
-    struct triangulateio in, out;
-    in.numberofpoints = 4;
-    in.numberofpointattributes = 0;
-    in.pointmarkerlist = NULL;
-    in.pointlist = (REAL *) malloc(in.numberofpoints * 2 * sizeof(REAL));
-    in.pointlist[0] = 0.0;
-    in.pointlist[1] = 0.0;
-    in.pointlist[2] = 1.0;
-    in.pointlist[3] = 0.0;
-    in.pointlist[4] = 1.0;
-    in.pointlist[5] = 10.0;
-    in.pointlist[6] = 0.0;
-    in.pointlist[7] = 10.0;
-    in.numberofsegments = 4;
-    in.segmentmarkerlist = NULL;
-    in.segmentlist = (int *) malloc(in.numberofsegments * 2 * sizeof(int));
-    in.segmentlist[0] = 0;
-    in.segmentlist[1] = 1;
-    in.segmentlist[2] = 1;
-    in.segmentlist[3] = 2;
-    in.segmentlist[4] = 2;
-    in.segmentlist[5] = 3;
-    in.segmentlist[6] = 3;
-    in.segmentlist[7] = 0;
-    in.numberofholes = 0;
-    in.holelist = NULL;
-    in.numberofregions = 0;
-    in.regionlist = NULL;
-    // need set of vertices, segments
-    // eventually, see which triangles border edge, on which side, etc...
-    // -p = planar straight line graph
-    // -z = number from zero
-    // -V = verbose
-    out.pointlist = NULL;
-    out.pointmarkerlist = NULL;
-    out.trianglelist = NULL;
-    out.segmentlist = NULL;
-    out.segmentmarkerlist = NULL;
-    //triangulate((char*)"pzV", &in, &out, NULL);
 
     installEventFilter(this);
     setMouseTracking(true);
@@ -65,38 +25,7 @@ Canvas::~Canvas(){
 
 void Canvas::initializeGL(){
     initializeOpenGLFunctions();
-
-        VAO.create();
-        VBO.create();
-        VAO.bind();
-        VBO.setUsagePattern(QOpenGLBuffer::StaticDraw);
-        VBO.bind();
-        float points[]{
-            -1.0f, -1.0f, 0.0f,
-            1.0f, -1.0f, 0.0f,
-            0.0f, 1.0f, 0.0f
-        };
-        VBO.allocate(points, sizeof(float)*9);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        VAO.release();
-
-        /*
-    QOpenGLShader vertex_shader(QOpenGLShader::Vertex);
-    vertex_shader.compileSourceCode(vertex_source);
-    qDebug() << vertex_shader.log();
-    QOpenGLShader fragment_shader(QOpenGLShader::Fragment);
-    fragment_shader.compileSourceCode(fragment_source);
-    qDebug() << fragment_shader.log();
-    shader.addShader(&vertex_shader);
-    shader.addShader(&fragment_shader);
-    *
-    */
-    shader.addShaderFromSourceCode(QOpenGLShader::Vertex, vertex_source);
-    shader.addShaderFromSourceCode(QOpenGLShader::Fragment, fragment_source);
-    shader.link();
-    qDebug() << shader.log();
-        //VAO.release();
+    glEnable(GL_DEPTH_TEST);
 
 }
 
@@ -120,14 +49,9 @@ void Canvas::paintGL(){
     view = glm::rotate(view, glm::radians(theta), glm::vec3(0.0f, 0.0f, 1.0f));
 
     for(unsigned int i=0; i<parts.size(); i++){
-        qDebug() << "rendering part " << i;
         parts[i]->render(view);
     }
 
-    shader.bind();
-    VAO.bind();
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    VAO.release();
 
 }
 
