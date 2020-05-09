@@ -78,6 +78,7 @@ void initialize(){
         GDSII_ELEMENT* element = structure->element;
         while(element != NULL){
             if(element->layer == gdslayer && element->type == ELEMENT_TYPE_BOUNDARY){
+                // TODO: ensure z2>z1 or whichever way it is so that normals are correct
 
                 // loop through points of polygon
 
@@ -90,10 +91,12 @@ void initialize(){
                 }
                 // clockwise if area is positive; CCW otherwise
 
+                float scale = 1000.0f;
                 point = element->point;
+                int num_points = 0;
                 while(point->next != NULL){ // skip last point, which is a duplicate of the first
+                    num_points += 1;
                     // assume CCW
-                    float scale = 1000.0f;
                     glm::vec2 p1 = glm::vec2(point->x/scale, point->y/scale);
                     glm::vec2 p2 = glm::vec2(point->next->x/scale, point->next->y/scale);
                     if(area > 0){ glm::vec2 temp = p1; p1 = p2; p2 = temp; }
@@ -118,45 +121,62 @@ void initialize(){
                     point = point->next;
                 }
 
-                    struct triangulateio in, out;
-    in.numberofpoints = 4;
-    in.numberofpointattributes = 0;
-    in.pointmarkerlist = NULL;
-    in.pointlist = (REAL *) malloc(in.numberofpoints * 2 * sizeof(REAL));
-    in.pointlist[0] = 0.0;
-    in.pointlist[1] = 0.0;
-    in.pointlist[2] = 1.0;
-    in.pointlist[3] = 0.0;
-    in.pointlist[4] = 1.0;
-    in.pointlist[5] = 10.0;
-    in.pointlist[6] = 0.0;
-    in.pointlist[7] = 10.0;
-    in.numberofsegments = 4;
-    in.segmentmarkerlist = NULL;
-    in.segmentlist = (int *) malloc(in.numberofsegments * 2 * sizeof(int));
-    in.segmentlist[0] = 0;
-    in.segmentlist[1] = 1;
-    in.segmentlist[2] = 1;
-    in.segmentlist[3] = 2;
-    in.segmentlist[4] = 2;
-    in.segmentlist[5] = 3;
-    in.segmentlist[6] = 3;
-    in.segmentlist[7] = 0;
-    in.numberofholes = 0;
-    in.holelist = NULL;
-    in.numberofregions = 0;
-    in.regionlist = NULL;
-    // need set of vertices, segments
-    // eventually, see which triangles border edge, on which side, etc...
-    // -p = planar straight line graph
-    // -z = number from zero
-    // -V = verbose
-    out.pointlist = NULL;
-    out.pointmarkerlist = NULL;
-    out.trianglelist = NULL;
-    out.segmentlist = NULL;
-    out.segmentmarkerlist = NULL;
-    triangulate((char*)"pzV", &in, &out, NULL);
+                struct triangulateio in, out;
+                in.numberofpoints = num_points;
+                in.numberofpointattributes = 0;
+                in.pointmarkerlist = NULL;
+                in.pointlist = (REAL *) malloc(in.numberofpoints * 2 * sizeof(REAL));
+                in.numberofsegments = num_points;
+                in.segmentmarkerlist = NULL;
+                in.segmentlist = (int *) malloc(in.numberofsegments * 2 * sizeof(int));
+                point = element->point;
+                //while(point->next != NULL){ // skip last point, which is a duplicate of the first
+                for(int i=0; i<num_points; i++){
+                    in.pointlist[i*2] = point->x/scale;
+                    in.pointlist[i*2+1] = point->y/scale;
+                    in.segmentlist[i*2] = i;
+                    in.segmentlist[i*2+1] = (i+1) % num_points;
+                    point = point->next;
+                }
+                in.numberofholes = 0;
+                in.holelist = NULL;
+                in.numberofregions = 0;
+                in.regionlist = NULL;
+                // need set of vertices, segments
+                // eventually, see which triangles border edge, on which side, etc...
+                // -p = planar straight line graph
+                // -z = number from zero
+                // -V = verbose
+                out.pointlist = NULL;
+                out.pointmarkerlist = NULL;
+                out.trianglelist = NULL;
+                out.segmentlist = NULL;
+                out.segmentmarkerlist = NULL;
+                triangulate((char*)"pz", &in, &out, NULL);
+                float z1 = zbounds[0]; float z2 = zbounds[1];
+                int num_corners = out.numberofcorners;
+                for(int i=0; i<out.numberoftriangles; i++){
+                    float tris[] = {
+                        // TODO: move points to account for GDS hole problems
+                        // TODO: make sure normals are right direction
+                        (float)out.pointlist[out.trianglelist[i*num_corners]*2+0],
+                        (float)out.pointlist[out.trianglelist[i*num_corners]*2+1], z1,0,0,1,
+                        (float)out.pointlist[out.trianglelist[i*num_corners+1]*2+0],
+                        (float)out.pointlist[out.trianglelist[i*num_corners+1]*2+1], z1,0,0,1,
+                        (float)out.pointlist[out.trianglelist[i*num_corners+2]*2+0],
+                        (float)out.pointlist[out.trianglelist[i*num_corners+2]*2+1], z1,0,0,1,
+                        (float)out.pointlist[out.trianglelist[i*num_corners]*2+0],
+                        (float)out.pointlist[out.trianglelist[i*num_corners]*2+1], z2,0,0,-1,
+                        (float)out.pointlist[out.trianglelist[i*num_corners+1]*2+0],
+                        (float)out.pointlist[out.trianglelist[i*num_corners+1]*2+1], z2,0,0,-1,
+                        (float)out.pointlist[out.trianglelist[i*num_corners+2]*2+0],
+                        (float)out.pointlist[out.trianglelist[i*num_corners+2]*2+1], z2,0,0,-1,
+                    };
+
+                    for(unsigned int j=0; j<6*6; j++){
+                        vertices.push_back(tris[j]);
+                    }
+                }
 
 
 
