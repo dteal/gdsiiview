@@ -1,2 +1,5 @@
+# exclude Qt user files
+gdsiiview.pro.user
+
 # exclude compiled binaries
-build/*
+bin/*

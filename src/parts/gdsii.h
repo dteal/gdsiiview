@@ -4,6 +4,7 @@
 // GDSII file format parser
 // very minimal; currently only extracts layer geometry
 // written partly in ANSI C style for future possibilities
+// but inline to work with Qt/C++ compilation
 
 #include <assert.h>
 #include <stdio.h>
@@ -121,7 +122,7 @@ struct GDSII{               // a complete GDSII file
 
 ////////// DATA STRUCTURE HANDLERS ////////////////////////////////////////////
 
-GDSII_POINT* gdsii_create_point(){
+inline GDSII_POINT* gdsii_create_point(){
     GDSII_POINT* point;
     point = (GDSII_POINT*)malloc(sizeof(GDSII_POINT));
     (*point).x = 0;
@@ -130,7 +131,7 @@ GDSII_POINT* gdsii_create_point(){
     return point;
 }
 
-void gdsii_delete_point(GDSII_POINT* point){
+inline void gdsii_delete_point(GDSII_POINT* point){
     while(point != NULL){
         GDSII_POINT* next = (*point).next;
         free(point);
@@ -138,7 +139,7 @@ void gdsii_delete_point(GDSII_POINT* point){
     }
 }
 
-GDSII_ELEMENT* gdsii_create_element(){
+inline GDSII_ELEMENT* gdsii_create_element(){
     GDSII_ELEMENT* element;
     element = (GDSII_ELEMENT*)malloc(sizeof(GDSII_ELEMENT));
     (*element).type = ELEMENT_TYPE_UNKNOWN;
@@ -159,7 +160,7 @@ GDSII_ELEMENT* gdsii_create_element(){
     return element;
 }
 
-void gdsii_delete_element(GDSII_ELEMENT* element){
+inline void gdsii_delete_element(GDSII_ELEMENT* element){
     while(element != NULL){
         gdsii_delete_element((*element).ref);
         gdsii_delete_point((*element).point);
@@ -169,7 +170,7 @@ void gdsii_delete_element(GDSII_ELEMENT* element){
     }
 }
 
-GDSII_STRUCTURE* gdsii_create_structure(){
+inline GDSII_STRUCTURE* gdsii_create_structure(){
     GDSII_STRUCTURE* structure;
     structure = (GDSII_STRUCTURE*)malloc(sizeof(GDSII_STRUCTURE));
     (*structure).name = NULL;
@@ -178,7 +179,7 @@ GDSII_STRUCTURE* gdsii_create_structure(){
     return structure;
 }
 
-void gdsii_delete_structure(GDSII_STRUCTURE* structure){
+inline void gdsii_delete_structure(GDSII_STRUCTURE* structure){
     while(structure != NULL){
         gdsii_delete_element((*structure).element);
         if((*structure).name != NULL){
@@ -190,21 +191,21 @@ void gdsii_delete_structure(GDSII_STRUCTURE* structure){
     }
 }
 
-GDSII* gdsii_create_gdsii(){
+inline GDSII* gdsii_create_gdsii(){
     GDSII* gdsii;
     gdsii = (GDSII*)malloc(sizeof(GDSII));
     (*gdsii).structure = NULL;
     return gdsii;
 }
 
-void gdsii_delete_gdsii(GDSII* gdsii){
+inline void gdsii_delete_gdsii(GDSII* gdsii){
     gdsii_delete_structure((*gdsii).structure);
     free(gdsii);
 }
 
 ////////// DATA PARSING ///////////////////////////////////////////////////////
 
-std::vector<int16_t> gdsii_parse_int16(uint8_t* data, uint16_t length){
+inline std::vector<int16_t> gdsii_parse_int16(uint8_t* data, uint16_t length){
     assert(length%2==0);
     std::vector<int16_t> numbers;
     for(unsigned int i=0; i<length/2; i++){
@@ -213,7 +214,7 @@ std::vector<int16_t> gdsii_parse_int16(uint8_t* data, uint16_t length){
     return numbers;
 }
 
-std::vector<int32_t> gdsii_parse_int32(uint8_t* data, uint16_t length){
+inline std::vector<int32_t> gdsii_parse_int32(uint8_t* data, uint16_t length){
     assert(length%4==0);
     std::vector<int32_t> numbers;
     for(unsigned int i=0; i<length/4; i++){
@@ -240,7 +241,7 @@ std::vector<REAL64> parse_real64(uint8_t* data, uint16_t length){
 }
 */
 
-char* gdsii_parse_string(uint8_t* data, uint16_t length){
+inline char* gdsii_parse_string(uint8_t* data, uint16_t length){
     // data is not necessarily null-terminated
     char* text = NULL;
     text = (char*)malloc(sizeof(char)*(length+1));
@@ -253,7 +254,7 @@ char* gdsii_parse_string(uint8_t* data, uint16_t length){
 
 ////////// DATA PARSING ///////////////////////////////////////////////////////
 
-bool gdsii_read(GDSII* gdsii, const char* filepath){
+inline bool gdsii_read(GDSII* gdsii, const char* filepath){
 
     FILE* file = fopen(filepath, "r");
     if(file == NULL){ perror("Error! Could not read GDS file."); return false; }
@@ -262,6 +263,7 @@ bool gdsii_read(GDSII* gdsii, const char* filepath){
     GDSII_STRUCTURE** structure = &((*gdsii).structure);
     GDSII_ELEMENT** element = NULL;
 
+    std::cout << "part" << std::endl;
     while(true){
 
         // read record header
@@ -293,6 +295,8 @@ bool gdsii_read(GDSII* gdsii, const char* filepath){
                 element = &((**structure).element);
                 break;
             case RECORD_TYPE_ENDSTR: // move marker to new end of linked list
+                // TODO
+                // layers named "$$$CONTEXT_INFO$$$ may be used to store additional data (PCell?) (https://www.klayout.de/forum/discussion/1026/very-important-gds-exported-from-k-layout-not-working-on-cadence-at-foundry)
                 //printf("ENDSTRUCT\n");
                 structure = &((**structure).next);
                 break;
@@ -344,7 +348,7 @@ bool gdsii_read(GDSII* gdsii, const char* filepath){
                 }
                 break;
             case RECORD_TYPE_LAYER:
-                //printf("\tLAYER");
+                //printf("\tLAYER\n");
                 if(data_type == DATA_TYPE_INT16){
                     std::vector<int16_t>points = gdsii_parse_int16(data, length);
                     (**element).layer = points[0];

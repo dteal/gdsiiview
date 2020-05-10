@@ -6,33 +6,30 @@ Layers of potentially multiple GDSII files, according to specifications in a con
 
 ## Usage
 
-Run
+After compilation, a single executable (`gdsiiview.exe`, etc.) should exist. Run this program to see a window with an empty 3D view and a menubar. Select `File->Open File...` from the menu bar to open a `*.gdsiiview` file (a normal text file with specific formatting), which references GDSII files with colors and transformations.
 
-`./gdsiiview config.gdsiiview`
+See the sample files `example/example.gdsiiview` and `example/example.gds`.
 
-where `config.gdsiiview` is a plain text configuration file. See the example folder for an example. The configuration file or any referenced GDSII files will be reloaded whenever they are changed in the file system.
+## Development
 
-## Installation
-
-On Debian Linux:
+This project is designed to compile on multiple platforms. Linux and Windows are tested; MacOS support is theoretical.
 
 ### Dependencies
 
-- gcc with C++11 support
-- libglfw3-dev (https://www.glfw.org/)
-- libglew-dev (http://glew.sourceforge.net/)
-- libglm-dev (https://glm.g-truc.net/0.9.9/index.html)
-- libtriangle-dev (http://www.cs.cmu.edu/~quake/triangle.html)
-- libboost-dev (https://www.boost.org/)
-
-### Build and Run
+This project depends on the OpenGL Mathematics (GLM) library (https://glm.g-truc.net/0.9.9/index.html) and Jonathan Shewchuk's Triangle library (https://www.cs.cmu.edu/~quake/triangle.html). For ease of compilation on different platforms, the source for both is included directly in the project source repository, although GLM is a git submodule. Thus, to obtain a local copy of the source, run:
 
 ```
+git clone https://github.com/dteal/gdsiiview
 cd gdsiiview
-mkdir bin
-make
-./bin/gdsiiview ./example/example.gdsiiview
+git submodule init
+git submodule update
 ```
+
+The GUI is written in Qt; obtain the latest version (Qt 5.x) from, e.g., (https://www.qt.io/download-qt-installer).
+
+### Compilation
+
+This project can be opened and compiled in Qt Creator, the Qt C++ IDE.
 
 ## License
 
