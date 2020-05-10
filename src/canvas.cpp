@@ -227,6 +227,7 @@ void Canvas::file_save(){
     glReadPixels(0, 0, (int)screen_size.x, (int)screen_size.y, GL_RGBA, GL_UNSIGNED_BYTE, data);
     QImage image(data, (int)screen_size.x, (int)screen_size.y, QImage::Format_RGBA8888); // might cause a little vs. big endian bug on some architectures?
     image = image.mirrored(false, true); // original OpenGL image was mirrored
+    image.save(filepath);
 }
 void Canvas::view_fit(){ qDebug() << "fit"; }
 void Canvas::view_perspective(){ qDebug() << "perspective"; }
