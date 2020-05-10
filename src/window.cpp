@@ -11,6 +11,7 @@ Window::Window(){
     file_menu->addAction("&Exit", [this]{close();}, QKeySequence(Qt::CTRL + Qt::Key_Q));
     QMenu* view_menu = menubar->addMenu("&View");
     view_menu->addAction("&Fit", [this]{canvas->view_fit();}, QKeySequence(Qt::CTRL + Qt::Key_F));
+    // TODO: make these match multiview projection standards
     view_menu->addAction("&Perspective", [this]{canvas->view_perspective();}, QKeySequence(Qt::CTRL + Qt::Key_P));
     view_menu->addAction("O&rthographic", [this]{canvas->view_orthographic();}, QKeySequence(Qt::CTRL + Qt::Key_R));
     view_menu->addAction("&Front (+X)");

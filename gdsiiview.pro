@@ -16,7 +16,9 @@ SOURCES += \
     src/thirdparty/triangle/triangle.c
 
 HEADERS += \
+    src/axes.h \
     src/canvas.h \
+    src/triad.h \
     src/window.h \
     src/shader.h \
     src/mesh.h \

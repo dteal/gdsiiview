@@ -7,11 +7,6 @@ Canvas::Canvas() {
     format.setProfile(QSurfaceFormat::CoreProfile);
     setFormat(format);
 
-    glm::vec3 test = glm::vec3(1.0f, 1.0f, 1.0f);
-    glm::mat4 trans = glm::mat4(1.0f);
-    trans = glm::scale(trans, glm::vec3(2.0f, 1.0f, 4.0f));
-    qDebug() << (trans*glm::vec4(test, 1.0f)).x;
-
     installEventFilter(this);
     setMouseTracking(true);
 
@@ -20,18 +15,19 @@ Canvas::Canvas() {
 }
 
 Canvas::~Canvas(){
+    makeCurrent(); // reinitialize OpenGL to correctly free GPU memory in destructors
     delete watcher;
+    delete axes;
 }
 
 void Canvas::initializeGL(){
     initializeOpenGLFunctions();
     glEnable(GL_DEPTH_TEST);
-
+    axes = new Axes();
 }
 
 void Canvas::resizeGL(int width, int height){
     screen_size = glm::vec2(width, height);
-    qDebug() << width << " " << height;
 }
 
 void Canvas::paintGL(){
@@ -44,9 +40,12 @@ void Canvas::paintGL(){
     view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     // camera rotate and zoom
-    view = glm::scale(view, glm::vec3(zoom, zoom, zoom));
-    view = glm::rotate(view, glm::radians(phi), glm::vec3(0.0f, 1.0f, 0.0f));
-    view = glm::rotate(view, glm::radians(theta), glm::vec3(0.0f, 0.0f, 1.0f));
+    view = glm::scale(view, glm::vec3(camera_zoom, camera_zoom, camera_zoom));
+    view = glm::rotate(view, glm::radians(camera_phi), glm::vec3(0.0f, 1.0f, 0.0f));
+    view = glm::rotate(view, glm::radians(camera_theta), glm::vec3(0.0f, 0.0f, 1.0f));
+    view = glm::translate(view, camera_position);
+
+    axes->render(view);
 
     for(unsigned int i=0; i<parts.size(); i++){
         parts[i]->render(view);
@@ -58,27 +57,39 @@ void Canvas::paintGL(){
 // Handle mouse events
 bool Canvas::eventFilter(QObject*, QEvent* event){
     if(event->type() == QEvent::Enter){}
-    if(event->type() == QEvent::Leave){ orbiting = false; }
+    if(event->type() == QEvent::Leave){ camera_orbiting = false; camera_panning = false; }
     if(event->type() == QEvent::MouseButtonPress){
-        if(((QMouseEvent*)event)->button()==Qt::LeftButton){ orbiting = true; }
+        if(((QMouseEvent*)event)->button()==Qt::LeftButton){ camera_orbiting = true; }
+        if(((QMouseEvent*)event)->button()==Qt::RightButton){ camera_panning = true; }
     }
     if(event->type() == QEvent::MouseButtonRelease){
-        if(((QMouseEvent*)event)->button()==Qt::LeftButton){ orbiting = false; }
+        if(((QMouseEvent*)event)->button()==Qt::LeftButton){ camera_orbiting = false; }
+        if(((QMouseEvent*)event)->button()==Qt::RightButton){ camera_panning = false; }
     }
     if(event->type() == QEvent::MouseMove){
         QPoint temppos = ((QMouseEvent*)event)->pos();
-        if(orbiting){
-            theta += (((float)temppos.x()) - cursor_position.x);
-            phi += (((float)temppos.y()) - cursor_position.y);
+        if(camera_orbiting){
+            camera_theta += (((float)temppos.x()) - cursor_position.x);
+            camera_phi += (((float)temppos.y()) - cursor_position.y);
             update();
+        }
+        if(camera_panning){
+            /*
+            glm::vec3 camera_vector = glm::vec3(sin(camera_phi)*cos(camera_theta), sin(camera_phi)*sin(camera_theta), cos(camera_phi));
+            glm::vec3 up_vector = glm::vec3(-cos(camera_phi)*cos(camera_theta), -cos(camera_phi)*sin(camera_theta), sin(camera_phi));
+            glm::vec3 right_vector = glm::cross(camera_vector, up_vector);
+            camera_position -= up_vector * (((float)temppos.y()) - cursor_position.y);
+            camera_position += right_vector * (((float)temppos.x()) - cursor_position.x);
+            update();
+            */
         }
         cursor_position = glm::vec2((float)temppos.x(), (float)temppos.y());
     }
     if(event->type() == QEvent::Wheel){
         if(((QWheelEvent*)event)->angleDelta().y()>0){
-            zoom *= 1.05;
+            camera_zoom *= 1.05;
         }else{
-            zoom /= 1.05;
+            camera_zoom /= 1.05;
         }
         update();
     }
@@ -89,7 +100,6 @@ bool Canvas::initialize_from_file(QString filepath){
     if(filepath == ""){ return false; }
     if(!(QFileInfo::exists(filepath) && QFileInfo(filepath).isFile())){ return false; }
 
-    qDebug() << "open: " << filepath;
     this->filepath = filepath;
     watcher->addPath(filepath);
     watcher->files().removeDuplicates();
@@ -186,12 +196,14 @@ bool Canvas::initialize_from_file(QString filepath){
 }
 
 void Canvas::update_file(QString filepath){
+    // TODO: why do is this required?
     if(filepath == this->filepath){
         initialize_from_file(filepath);
     }
 }
 void Canvas::file_open(){
-    QString filepath = QFileDialog::getOpenFileName(this, "Open *.gdsiiview File", "", "*.gdsiiview");
+    //QString filepath = QFileDialog::getOpenFileName(this, "Open *.gdsiiview File", "", "*.gdsiiview");
+    QString filepath = QFileDialog::getOpenFileName(this, "Open *.gdsiiview File", "../example", "*.gdsiiview");
     if(filepath != ""){ initialize_from_file(filepath); }}
 void Canvas::file_save(){
     QString filepath = QFileDialog::getSaveFileName(this, "Save Image", "", "*.png");
