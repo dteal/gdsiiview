@@ -263,7 +263,6 @@ inline bool gdsii_read(GDSII* gdsii, const char* filepath){
     GDSII_STRUCTURE** structure = &((*gdsii).structure);
     GDSII_ELEMENT** element = NULL;
 
-    std::cout << "part" << std::endl;
     while(true){
 
         // read record header

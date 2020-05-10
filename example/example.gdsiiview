@@ -31,3 +31,12 @@ gdsii: "example.gds"
     layer: 2
         zbounds: 100 150
         color: 100 0 100
+image: "example.png"
+    transform:
+        rotate: x 0
+        translate: 0 0 0
+    geometry:
+        xbounds: -100 100
+        ybounds: -40 40
+        zbounds: -10 0
+        color: 100 0 0

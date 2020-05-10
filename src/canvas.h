@@ -22,7 +22,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "axes.h"
 #include "parts/part.h"
-#include "parts/gdsiimesh.h"
+#include "parts/mesh.h"
 
 // This class loads and renders a 3D view of a single *.gdsiiview file;
 // it holds a large portion of the entire application code.

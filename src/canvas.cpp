@@ -99,6 +99,7 @@ bool Canvas::eventFilter(QObject*, QEvent* event){
 }
 
 bool Canvas::initialize_from_file(QString filepath){
+    // TODO: expect version number in file
     if(filepath == ""){ return false; }
     if(!(QFileInfo::exists(filepath) && QFileInfo(filepath).isFile())){ return false; }
 
