@@ -156,7 +156,7 @@ void initialize(){
                 for(int i=0; i<out.numberoftriangles; i++){
                     float tris[] = {
                         // TODO: move points to account for GDS hole problems
-                        // TODO: make sure normals are right direction
+                        // TODO: make sure normals are right direction (z2>z1)
                         (float)out.pointlist[out.trianglelist[i*num_corners]*2+0],
                         (float)out.pointlist[out.trianglelist[i*num_corners]*2+1], z1,0,0,1,
                         (float)out.pointlist[out.trianglelist[i*num_corners+1]*2+0],

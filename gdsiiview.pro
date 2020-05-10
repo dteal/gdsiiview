@@ -11,19 +11,18 @@ INCLUDEPATH += \
 
 SOURCES += \
     src/main.cpp \
-    src/canvas.cpp \
     src/window.cpp \
+    src/canvas.cpp \
     src/thirdparty/triangle/triangle.c
 
 HEADERS += \
-    src/axes.h \
-    src/canvas.h \
-    src/triad.h \
     src/window.h \
-    src/shader.h \
-    src/mesh.h \
-    src/part.h \
-    src/gdsii.h \
+    src/canvas.h \
+    src/axes.h \
+    src/parts/part.h \
+    src/parts/gdsii.h \
+    src/parts/gdsiimesh.h \
+    src/parts/image.h \
     src/thirdparty/triangle/triangle.h
 
 # For compilation of Triangle library:

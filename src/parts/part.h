@@ -8,7 +8,7 @@
 #include <vector>
 #include <ctime>
 #include "glm/glm.hpp"
-#include "mesh.h"
+#include "gdsiimesh.h"
 #include "gdsii.h"
 
 class Part : public QObject{

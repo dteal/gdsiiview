@@ -18,12 +18,15 @@ Canvas::~Canvas(){
     makeCurrent(); // reinitialize OpenGL to correctly free GPU memory in destructors
     delete watcher;
     delete axes;
+    delete axes2;
 }
 
 void Canvas::initializeGL(){
     initializeOpenGLFunctions();
     glEnable(GL_DEPTH_TEST);
     axes = new Axes();
+    axes2 = new Axes();
+    axes2->location = glm::vec3(0, 0, 100);
 }
 
 void Canvas::resizeGL(int width, int height){
@@ -37,15 +40,14 @@ void Canvas::paintGL(){
     //transform XYZ device space to screen XY
     glm::mat4 view;
     view = glm::ortho(-0.5f*screen_size.x/screen_size.y, 0.5f*screen_size.x/screen_size.y, -0.5f, 0.5f, -100.0f, 100.0f);
-    view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    // camera rotate and zoom
+    view = glm::rotate(view, glm::radians(240.0f), glm::vec3(0.5773503f, 0.5773503f, 0.5773503f));
+    view = glm::rotate(view, glm::radians(90-camera_phi), glm::vec3(0.0f, 1.0f, 0.0f));
+    view = glm::rotate(view, glm::radians(-camera_theta), glm::vec3(0.0f, 0.0f, 1.0f));
     view = glm::scale(view, glm::vec3(camera_zoom, camera_zoom, camera_zoom));
-    view = glm::rotate(view, glm::radians(camera_phi), glm::vec3(0.0f, 1.0f, 0.0f));
-    view = glm::rotate(view, glm::radians(camera_theta), glm::vec3(0.0f, 0.0f, 1.0f));
-    view = glm::translate(view, camera_position);
+    //view = glm::translate(view, camera_position);
 
     axes->render(view);
+    axes2->render(view);
 
     for(unsigned int i=0; i<parts.size(); i++){
         parts[i]->render(view);
@@ -69,9 +71,12 @@ bool Canvas::eventFilter(QObject*, QEvent* event){
     if(event->type() == QEvent::MouseMove){
         QPoint temppos = ((QMouseEvent*)event)->pos();
         if(camera_orbiting){
-            camera_theta += (((float)temppos.x()) - cursor_position.x);
-            camera_phi += (((float)temppos.y()) - cursor_position.y);
+            camera_theta -= (((float)temppos.x()) - cursor_position.x);
+            camera_phi -= (((float)temppos.y()) - cursor_position.y);
+            if(camera_phi < 0) camera_phi = 0;
+            if(camera_phi > 180) camera_phi = 180;
             update();
+            qDebug() << "Phi:" << camera_phi << "Theta:" << camera_theta;
         }
         if(camera_panning){
             /*

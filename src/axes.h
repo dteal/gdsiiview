@@ -95,6 +95,7 @@ Axes()  {
 void render(glm::mat4 transform){
     shader->bind();
     glLineWidth(2.0f);
+    //transform = glm::translate(transform, location);
     transform = glm::scale(transform, glm::vec3(radius, radius, radius));
     unsigned int transform_id = glGetUniformLocation(shader->programId(), "transform");
 
@@ -105,7 +106,7 @@ void render(glm::mat4 transform){
     glDrawArrays(GL_LINE_LOOP, 0, circle_num_vertices);
     circle_VAO->release();
     axis_VAO->bind();
-    glDrawArrays(GL_LINES, 0, circle_num_vertices);
+    glDrawArrays(GL_LINES, 0, 2);
     axis_VAO->release();
 
     // draw y axis and circle
@@ -126,6 +127,7 @@ void render(glm::mat4 transform){
     circle_VAO->release();
     axis_VAO->bind();
     glDrawArrays(GL_LINES, 0, circle_num_vertices);
+    axis_VAO->release();
 }
 
 };

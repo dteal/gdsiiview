@@ -18,9 +18,9 @@
 #include <sstream>
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-#include "part.h"
-#include "mesh.h"
 #include "axes.h"
+#include "parts/part.h"
+#include "parts/gdsiimesh.h"
 
 // This class loads and renders a 3D view of a single *.gdsiiview file;
 // it holds a large portion of the entire application code.
@@ -38,8 +38,8 @@ public:
     // panning. The zoom gives the length of a line on that perpendicular
     // plane centered at the view origin.
     glm::vec3 camera_position = glm::vec3(0.0f, 0.0f, 0.0f); // position of view origin w.r.t. model origin (model units)
-    float camera_theta = 45.0f; // camera horizontal angle (degrees down from z axis)
-    float camera_phi = M_PI/2.0f; // camera vertical angle (degrees CCW from x axis on xy plane)
+    float camera_theta = 45.0f; // camera horizontal angle (degrees CCW from x axis on xy plane)
+    float camera_phi = 45.0f; // camera vertical angle (degrees down from z axis)
     float camera_zoom = 0.0005f; // model display size (model units per pixel)
     bool camera_orbiting = false; // whether mouse is dragging to rotate view
     bool camera_panning = false; // whether mouse is dragging to shift view
@@ -47,6 +47,7 @@ public:
     // Background color displayed behind the loaded model.
     glm::vec3 background_color = glm::vec3(0.1f, 0.1f, 0.1f);
     Axes* axes;
+    Axes* axes2;
 
     // One *.gdsiiview file can be loaded at a time; its filepath is stored
     // in (filepath). When (watcher) detects this file is changed, it is
