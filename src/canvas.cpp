@@ -206,8 +206,7 @@ bool Canvas::initialize_from_file(QString filepath){
 }
 
 void Canvas::update_file(QString filepath){
-    // TODO: why do is this required?
-    if(filepath == this->filepath){
+    if(filepath == this->filepath){ // this function is called when any watched file is changed; make sure it's the right one
         initialize_from_file(filepath);
     }
 }
@@ -229,7 +228,10 @@ void Canvas::file_save(){
     image = image.mirrored(false, true); // original OpenGL image was mirrored
     image.save(filepath);
 }
-void Canvas::view_fit(){ qDebug() << "fit"; }
+void Canvas::view_fit(){ qDebug() << "fit";
+    // position object to fit centered in camera view
+    // make object fit in 90% of camera view or center object in perpendicular direction
+}
 void Canvas::view_perspective(){ qDebug() << "perspective"; }
 void Canvas::view_orthographic(){ qDebug() << "ortho"; }
 void Canvas::view_orient(float theta, float phi){

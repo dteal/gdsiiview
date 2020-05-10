@@ -42,7 +42,7 @@ const char* vertex_source = "                           \n\
     out vec3 normal;                                    \n\
     void main(){                                        \n\
         gl_Position = transform * vec4(pos.xyz, 1.0f);  \n\
-        normal = nor;                                   \n\
+        normal = nor;//normalize(transform * vec4(nor.xyz, 1.0f)).xyz;                                   \n\
     }";
 const char* fragment_source = "                         \n\
     #version 330 core                                   \n\
@@ -70,54 +70,51 @@ void initialize(){
 
     std::vector<float> vertices;
 
+    if(zbounds.y > zbounds.x){ // ensure z bound order
+        zbounds = glm::vec2(zbounds.y, zbounds.x);
+    };
+
     GDSII_STRUCTURE* structure = gdsii->structure;
     while(structure != NULL){
         GDSII_ELEMENT* element = structure->element;
         while(element != NULL){
             if(element->layer == gdslayer && element->type == ELEMENT_TYPE_BOUNDARY){
-                // TODO: ensure z2>z1 or whichever way it is so that normals are correct
 
-                // loop through points of polygon
+                // Only consider polygons with at least 3 points.
+                if(element->point == NULL ||
+                   element->point->next == NULL ||
+                   element->point->next->next == NULL){continue;}
 
-                // determine CW vs CCW edges by integrating
-                GDSII_POINT* point = element->point;
+                float scale = 1000.0f; // (GDSII database units per model unit) TODO: update to use GDSII file units
+
+                // Loop through the points of the polygon in two passes.
+                // During the first pass, count the number of points, extract
+                // the points and calculate normal vectors to each edge, and
+                // determine whether the edge winds clockwise (CW) or
+                // counterclockwise (CCW).
+                unsigned int num_points = 0;
+                std::vector<glm::vec2> points;
+                std::vector<glm::vec2> normals;
                 float area = 0.0f;
+                GDSII_POINT* point = element->point;
                 while(point->next != NULL){ // skip last point, which is a duplicate of the first
+                    num_points += 1;
+                    glm::vec2 scaled_point = glm::vec2(point->x/scale, point->y/scale);
+                    glm::vec2 scaled_point_next = glm::vec2(point->next->x/scale, point->next->y/scale);
+                    glm::vec2 normal = glm::vec2(scaled_point_next.y-scaled_point.y,
+                                                 scaled_point.x-scaled_point_next.x);
+                    normal /= glm::length(normal);
+                    points.push_back(scaled_point);
+                    normals.push_back(normal);
                     area += (point->next->x-point->x)*(point->next->y+point->y); // 2 * area between line and x-axis
                     point = point->next;
                 }
-                // clockwise if area is positive; CCW otherwise
+                bool CW = area > 0; // polygon is clockwise if area is positive, CCW otherwise
 
-                float scale = 1000.0f;
-                point = element->point;
-                int num_points = 0;
-                while(point->next != NULL){ // skip last point, which is a duplicate of the first
-                    num_points += 1;
-                    // assume CCW
-                    glm::vec2 p1 = glm::vec2(point->x/scale, point->y/scale);
-                    glm::vec2 p2 = glm::vec2(point->next->x/scale, point->next->y/scale);
-                    if(area > 0){ glm::vec2 temp = p1; p1 = p2; p2 = temp; }
-
-                    glm::vec2 n = glm::vec2(p2.y-p1.y, p1.x-p2.x);
-                    n /= glm::length(n);
-                    float z1 = zbounds[0]; float z2 = zbounds[1];
-                    //float delta = 0.1/scale; // shift all vertices inward by less than a database unit
-                    //p1 -= n*delta;
-                    //p2 -= n*delta;
-                    float tris[] = {
-                        p1.x, p1.y, z1, n.x, n.y, 0,
-                        p2.x, p2.y, z1, n.x, n.y, 0,
-                        p2.x, p2.y, z2, n.x, n.y, 0,
-                        p2.x, p2.y, z2, n.x, n.y, 0,
-                        p1.x, p1.y, z2, n.x, n.y, 0,
-                        p1.x, p1.y, z1, n.x, n.y, 0,
-                    };
-                    for(unsigned int j=0; j<6*6; j++){
-                        vertices.push_back(tris[j]);
-                    }
-                    point = point->next;
-                }
-
+                // During the second pass, (1) offset each point along its
+                // adjacent edge normals by a small amount delta to help
+                // triangulate weird polygons, (2) create edge polygons,
+                // and (3) prepare to triangulate the polygon.
                 struct triangulateio in, out;
                 in.numberofpoints = num_points;
                 in.numberofpointattributes = 0;
@@ -126,17 +123,59 @@ void initialize(){
                 in.numberofsegments = num_points;
                 in.segmentmarkerlist = NULL;
                 in.segmentlist = (int *) malloc(in.numberofsegments * 2 * sizeof(int));
-                point = element->point;
-                //while(point->next != NULL){ // skip last point, which is a duplicate of the first
-                for(int i=0; i<num_points; i++){
-                    in.pointlist[i*2] = point->x/scale;
-                    in.pointlist[i*2+1] = point->y/scale;
-                    in.segmentlist[i*2] = i;
-                    in.segmentlist[i*2+1] = (i+1) % num_points;
-                    point = point->next;
-                }
                 in.numberofholes = 0;
                 in.holelist = NULL;
+                //in.numberofholes = num_points;
+                //in.holelist = (REAL *) malloc(in.numberofsegments * 2 * sizeof(REAL));
+                for(unsigned int i=0; i<num_points; i++){
+
+                    float delta = 0.01f;
+                    //float delta = 0.1f/scale; // fix to database units
+
+                    // get points and normals
+                    int di = num_points+1;
+                    if(CW){ di = num_points-1; };
+                    glm::vec2 p1 = points[i];
+                    glm::vec2 p2 = points[(i+di)%num_points];
+                    glm::vec2 normal_1a = normals[(i)%num_points];
+                    glm::vec2 normal_1b = normals[(i+di)%num_points];
+                    glm::vec2 normal_2a = normals[(i+di)%num_points];
+                    glm::vec2 normal_2b = normals[(i+di+di)%num_points];
+                    if(CW){
+                        normal_1a = -normal_1a;
+                        normal_1b = -normal_1b;
+                        normal_2a = -normal_2a;
+                        normal_2b = -normal_2b;
+                    }
+                    p1 -= delta*(normal_1a + normal_1b);
+                    p2 -= delta*(normal_2a + normal_2b);
+                    float z1 = zbounds[0]; float z2 = zbounds[1];
+
+                    float tris[] = {
+                        p1.x, p1.y, z1, normal_1b.x, normal_1b.y, 0,
+                        p2.x, p2.y, z1, normal_1b.x, normal_1b.y, 0,
+                        p2.x, p2.y, z2, normal_1b.x, normal_1b.y, 0,
+                        p2.x, p2.y, z2, normal_1b.x, normal_1b.y, 0,
+                        p1.x, p1.y, z2, normal_1b.x, normal_1b.y, 0,
+                        p1.x, p1.y, z1, normal_1b.x, normal_1b.y, 0,
+                    };
+                    for(unsigned int j=0; j<6*6; j++){
+                        vertices.push_back(tris[j]);
+                    }
+
+                    in.pointlist[i*2] = p1.x;
+                    in.pointlist[i*2+1] = p1.y;
+                    in.segmentlist[i*2] = i;
+                    in.segmentlist[i*2+1] = (i+1) % num_points;
+
+                    /*
+                    glm::vec2 hole_marker = p1 + p2 + normal_1b;
+                    hole_marker *= 0.5;
+                    in.holelist[i*2] = hole_marker.x;
+                    in.holelist[i*2+1] = hole_marker.y;
+                    */
+                }
+
                 in.numberofregions = 0;
                 in.regionlist = NULL;
                 // need set of vertices, segments
@@ -232,6 +271,7 @@ void deinitialize(){
 // draw mesh
 void render(glm::mat4 view){
     if(initialized){
+        // TODO: rotate normals
         shader->bind();
         unsigned int matlocation = glGetUniformLocation(shader->programId(), "transform");
         glUniformMatrix4fv(matlocation, 1, GL_FALSE, glm::value_ptr(view));
