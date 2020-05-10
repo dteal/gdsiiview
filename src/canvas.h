@@ -6,6 +6,8 @@
 #include <QFileSystemWatcher>
 #include <QFileDialog> // open/save dialogs
 #include <QFileInfo>
+#include <QStandardPaths>
+#include <QImageWriter>
 #include <QMessageBox>
 #include <QDebug>
 #include <QEvent>
@@ -39,15 +41,14 @@ public:
     // plane centered at the view origin.
     glm::vec3 camera_position = glm::vec3(0.0f, 0.0f, 0.0f); // position of view origin w.r.t. model origin (model units)
     float camera_theta = 45.0f; // camera horizontal angle (degrees CCW from x axis on xy plane)
-    float camera_phi = 45.0f; // camera vertical angle (degrees down from z axis)
-    float camera_zoom = 0.0005f; // model display size (model units per pixel)
+    float camera_phi = 54.73561f; // camera vertical angle (degrees down from z axis)
+    float camera_zoom = 500.0f; // model display size (model units per window height)
     bool camera_orbiting = false; // whether mouse is dragging to rotate view
     bool camera_panning = false; // whether mouse is dragging to shift view
 
     // Background color displayed behind the loaded model.
     glm::vec3 background_color = glm::vec3(0.1f, 0.1f, 0.1f);
     Axes* axes;
-    Axes* axes2;
 
     // One *.gdsiiview file can be loaded at a time; its filepath is stored
     // in (filepath). When (watcher) detects this file is changed, it is
@@ -74,7 +75,7 @@ public slots:
     void view_fit(); // adjust zoom to fit model in screen (camera view)
     void view_perspective(); // change to perspective camera view
     void view_orthographic(); // change to orthographic camera view
-    void view_orient(glm::vec3 direction, glm::vec3 up); // TODO: update this
+    void view_orient(float theta, float phi); // change to given view
 };
 
 #endif // CANVAS_H

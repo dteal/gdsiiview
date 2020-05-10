@@ -18,15 +18,12 @@ Canvas::~Canvas(){
     makeCurrent(); // reinitialize OpenGL to correctly free GPU memory in destructors
     delete watcher;
     delete axes;
-    delete axes2;
 }
 
 void Canvas::initializeGL(){
     initializeOpenGLFunctions();
     glEnable(GL_DEPTH_TEST);
     axes = new Axes();
-    axes2 = new Axes();
-    axes2->location = glm::vec3(0, 0, 100);
 }
 
 void Canvas::resizeGL(int width, int height){
@@ -40,14 +37,13 @@ void Canvas::paintGL(){
     //transform XYZ device space to screen XY
     glm::mat4 view;
     view = glm::ortho(-0.5f*screen_size.x/screen_size.y, 0.5f*screen_size.x/screen_size.y, -0.5f, 0.5f, -100.0f, 100.0f);
+    view = glm::scale(view, glm::vec3(1/camera_zoom, 1/camera_zoom, 1/camera_zoom));
     view = glm::rotate(view, glm::radians(240.0f), glm::vec3(0.5773503f, 0.5773503f, 0.5773503f));
     view = glm::rotate(view, glm::radians(90-camera_phi), glm::vec3(0.0f, 1.0f, 0.0f));
     view = glm::rotate(view, glm::radians(-camera_theta), glm::vec3(0.0f, 0.0f, 1.0f));
-    view = glm::scale(view, glm::vec3(camera_zoom, camera_zoom, camera_zoom));
-    //view = glm::translate(view, camera_position);
-
     axes->render(view);
-    axes2->render(view);
+
+    view = glm::translate(view, camera_position);
 
     for(unsigned int i=0; i<parts.size(); i++){
         parts[i]->render(view);
@@ -76,17 +72,18 @@ bool Canvas::eventFilter(QObject*, QEvent* event){
             if(camera_phi < 0) camera_phi = 0;
             if(camera_phi > 180) camera_phi = 180;
             update();
-            qDebug() << "Phi:" << camera_phi << "Theta:" << camera_theta;
         }
         if(camera_panning){
-            /*
-            glm::vec3 camera_vector = glm::vec3(sin(camera_phi)*cos(camera_theta), sin(camera_phi)*sin(camera_theta), cos(camera_phi));
-            glm::vec3 up_vector = glm::vec3(-cos(camera_phi)*cos(camera_theta), -cos(camera_phi)*sin(camera_theta), sin(camera_phi));
+            glm::vec3 camera_vector = glm::vec3(sin(glm::radians(camera_phi))*cos(glm::radians(camera_theta)),
+                                                sin(glm::radians(camera_phi))*sin(glm::radians(camera_theta)),
+                                                cos(glm::radians(camera_phi)));
+            glm::vec3 up_vector = glm::vec3(-cos(glm::radians(camera_phi))*cos(glm::radians(camera_theta)),
+                                            -cos(glm::radians(camera_phi))*sin(glm::radians(camera_theta)),
+                                            sin(glm::radians(camera_phi)));
             glm::vec3 right_vector = glm::cross(camera_vector, up_vector);
-            camera_position -= up_vector * (((float)temppos.y()) - cursor_position.y);
-            camera_position += right_vector * (((float)temppos.x()) - cursor_position.x);
+            camera_position -= up_vector * (((float)temppos.y()) - cursor_position.y)/screen_size.y*camera_zoom;
+            camera_position -= right_vector * (((float)temppos.x()) - cursor_position.x)/screen_size.y*camera_zoom;
             update();
-            */
         }
         cursor_position = glm::vec2((float)temppos.x(), (float)temppos.y());
     }
@@ -104,6 +101,14 @@ bool Canvas::eventFilter(QObject*, QEvent* event){
 bool Canvas::initialize_from_file(QString filepath){
     if(filepath == ""){ return false; }
     if(!(QFileInfo::exists(filepath) && QFileInfo(filepath).isFile())){ return false; }
+
+    // reset view when new file opened to avoid surprising behavior
+    // (but keep view if only updating current file)
+    if(filepath != this->filepath){
+        camera_position = glm::vec3(0.0f, 0.0f, 0.0f);
+        camera_theta = 45.0f;
+        camera_phi = 54.73561f;
+    }
 
     this->filepath = filepath;
     watcher->addPath(filepath);
@@ -211,10 +216,23 @@ void Canvas::file_open(){
     QString filepath = QFileDialog::getOpenFileName(this, "Open *.gdsiiview File", "../example", "*.gdsiiview");
     if(filepath != ""){ initialize_from_file(filepath); }}
 void Canvas::file_save(){
-    QString filepath = QFileDialog::getSaveFileName(this, "Save Image", "", "*.png");
-    // need to check whether path is empty and whether ".png" is at end of string
-    qDebug() << "save image: " << filepath; }
+    QFileDialog save_dialog(this, "Save Image");
+    save_dialog.setAcceptMode(QFileDialog::AcceptSave);
+    save_dialog.setNameFilter("Images (*.png)"); // display only *.png files
+    save_dialog.setDirectory(QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0]); // open in documents folder
+    save_dialog.setDefaultSuffix("png"); // force any file extension, and use "*.png" by default
+    if(!save_dialog.exec()){ return; } // file dialog cancelled
+    QString filepath = save_dialog.selectedFiles().first();
+    uint8_t* data = new uint8_t[4*(int)(screen_size.x*screen_size.y)];
+    glReadPixels(0, 0, (int)screen_size.x, (int)screen_size.y, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    QImage image(data, (int)screen_size.x, (int)screen_size.y, QImage::Format_RGBA8888); // might cause a little vs. big endian bug on some architectures?
+    image = image.mirrored(false, true); // original OpenGL image was mirrored
+}
 void Canvas::view_fit(){ qDebug() << "fit"; }
 void Canvas::view_perspective(){ qDebug() << "perspective"; }
 void Canvas::view_orthographic(){ qDebug() << "ortho"; }
-void Canvas::view_orient(glm::vec3 direction, glm::vec3 up){ qDebug() << "orient"; }
+void Canvas::view_orient(float theta, float phi){
+    camera_theta = theta;
+    camera_phi = phi;
+    update();
+}

@@ -95,7 +95,7 @@ Axes()  {
 void render(glm::mat4 transform){
     shader->bind();
     glLineWidth(2.0f);
-    //transform = glm::translate(transform, location);
+    transform = glm::translate(transform, location);
     transform = glm::scale(transform, glm::vec3(radius, radius, radius));
     unsigned int transform_id = glGetUniformLocation(shader->programId(), "transform");
 
