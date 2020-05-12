@@ -1,43 +1,62 @@
-background: 0 0 0
+# This line is a comment (it begins with "#").
+# Set the background color. Colors are three numbers, 0-255, red/green/blue.
+background: 80 80 80
+# Insert this GDSII file. Filepaths are relative to the location of this .gdsii file.
 gdsii: "example.gds"
-    comment: example part 1
+    # The part can be rotated or scaled.
     transform:
-        comment: rotate the part!
-        rotate: z 45
+	# Rotate first. Rotation is in degrees about "x", "y", or "z" axes.
+        rotate: z 0
+	# Translation by some number of model units (likely micrometers).
         translate: 0 0 0
+    # Display GDSII layer 0
     layer: 0
-        comment: substrate
-        zbounds: -500 0
+        # This layer should have thickness 200, from z=-200 to z=0.
+        zbounds: -200 0
+        # ...and give the layer a color.
         color: 100 150 100
-        stl: "example_bottom.stl"
+    # Ditto.
     layer: 1
-        zbounds: 0 100
+        zbounds: 0 20
         color: 0 50 255
-        stl: "example_middle.stl"
     layer: 2
-        zbounds: 100 150
+        zbounds: 20 100
         color: 255 255 0
-        stl: "example_text.stl"
-gdsii: "example.gds"
-    comment: example part 2
-    transform:
-        rotate: x 90 
-        translate: 0 0 1.0
-    layer: 0
-        zbounds: -500 0
-        color: 100 100 100
-    layer: 1
-        zbounds: 0 100
-        color: 0 200 50
-    layer: 2
-        zbounds: 100 150
-        color: 100 0 100
+# Open an image as a rectangular prism! PNG and JPEG files are supported.
 image: "example.png"
+    # Like before, this can be translated and rotated. In this case, the image is translated before being rotated, which means the center of rotation is not at the origin.
     transform:
-        translate: 0 -200 10
-        rotate: z 45 
+        translate: 100 -200 0
+        rotate: z 0 
+    # Define the size of the rectangular prism. The image is always displayed on the top (+Z) face; change this by properly rotating the part.
     geometry:
+        # If need be, the image can be mirrored in the horizontal ("x") or vertical ("y") direction.
+        mirror: x
+        # The size and color of the rectangular prism are defined similarly to GDSII layers.
         xbounds: -150 150
         ybounds: -100 100
-        zbounds: -10 0
+        zbounds: -100 0
+        color: 100 0 0
+# The same part can be opened multiple times.
+gdsii: "example.gds"
+    # To hide a part, include the following line. Comment out or delete the line to show the part again.
+    #hidden: true
+    transform:
+        rotate: x -90 
+        rotate: y 180 
+        translate: 0 -1000 0
+        rotate: z -45 
+    # Layers can have different thicknesses than previously defined.
+    layer: 0
+        zbounds: -50 0
+        color: 100 100 100
+    layer: 1
+        zbounds: 0 20
+        color: 0 200 50
+    # The same layer can even have multiple thicknesses and colors!
+    layer: 2
+        zbounds: 50 60
+        color: 100 0 100
+    layer: 2
+        zbounds: 70 100
         color: 100 0 0

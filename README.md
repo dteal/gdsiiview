@@ -6,6 +6,8 @@ Layers of potentially multiple GDSII files, according to specifications in a con
 
 NOTE: This program is still under development, and currently only supports GDSII polygons (notably, paths and cells are NOT displayed (properly)). Certain other features (e.g., units other than 1000 database units = 1um) are also not yet implemented.
 
+![screenshot](example/example_screenshot.png?raw=true "Example Screenshot")
+
 ## Usage
 
 Until I figure out how to properly package this in a single executable or something, it's easiest to compile and run this program through Qt Creator, a cross-platform C++ IDE for the Qt graphical user interface library. Follow the "Compilation" instructions in the next section to set this up.
