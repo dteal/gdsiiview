@@ -40,7 +40,7 @@ image: "example.png"
 # The same part can be opened multiple times.
 gdsii: "example.gds"
     # To hide a part, include the following line. Comment out or delete the line to show the part again.
-    #hidden: true
+    hidden: true
     transform:
         rotate: x -90 
         rotate: y 180 

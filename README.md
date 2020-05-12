@@ -22,7 +22,7 @@ The window menubar contains several helpful commands. "View->Fit" zooms and repo
 
 "File->Export Image..." exports the current window to an image file. This is useful for, e.g., making figures for later use. The image file resolution is the current size of the window. The background color can be defined in the `*.gdsiiview` file.
 
-Finally, "File->Open..." opens a `*.gdsiiview` file, and both the `*.gdsiiview` file and referenced files (i.e., GDSII and image files) are watched. If any of the above are changed (e.g., edited in a 2D layout editor), the files are reloaded and the 3D view updated.
+Finally, "File->Open..." opens a `*.gdsiiview` file, and both the `*.gdsiiview` file and referenced files (i.e., GDSII and image files) are watched. If any of the above are changed (e.g., edited in a 2D layout editor), the files are reloaded and the 3D view updated. NOTE: this currently breaks after 5-20 reloads on Windows for unknown reasons. If the file fails to update, just reopen the file or restart the program.
 
 ## Compilation
 

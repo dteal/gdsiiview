@@ -11,6 +11,7 @@ Canvas::Canvas() {
     setMouseTracking(true);
 
     watcher = new QFileSystemWatcher(this);
+    // TODO: this stops registering watches after ~5-20 file changes on Windows?!
     connect(watcher, &QFileSystemWatcher::fileChanged, this, &Canvas::update_file);
 }
 
@@ -117,8 +118,8 @@ bool Canvas::initialize_from_file(QString filepath){
     bool reset_view = (filepath != this->filepath);
 
     this->filepath = filepath;
+    watcher->files().clear();
     watcher->addPath(filepath);
-    watcher->files().removeDuplicates();
 
     for(unsigned int i=0; i<parts.size(); i++){
         parts[i]->deinitialize();
@@ -180,7 +181,6 @@ bool Canvas::initialize_from_file(QString filepath){
             temppart = std::shared_ptr<Part>(new Part());
             temppart->filepath = QDir(relativepath).filePath(QString(commands[1].c_str()));
             watcher->addPath(temppart->filepath);
-            watcher->files().removeDuplicates();
             if(commands[0] == "gdsii:"){ temppart->type = Part::PART_GDSII; }
             if(commands[0] == "image:"){ temppart->type = Part::PART_IMAGE; }
             temppart->created = true;
@@ -322,11 +322,13 @@ void Canvas::view_fit(){
             std::numeric_limits<float>::max(),
             std::numeric_limits<float>::lowest());
     for(unsigned int i=0; i<parts.size(); i++){
+        if(!parts[i]->hidden){
         glm::vec4 partbounds = parts[i]->get_bounds(view);
         if(partbounds[0] < bounds[0]) bounds[0] = partbounds[0];
         if(partbounds[1] > bounds[1]) bounds[1] = partbounds[1];
         if(partbounds[2] < bounds[2]) bounds[2] = partbounds[2];
         if(partbounds[3] > bounds[3]) bounds[3] = partbounds[3];
+        }
     }
 
     // first, center the camera
