@@ -16,13 +16,13 @@ SOURCES += \
     src/thirdparty/triangle/triangle.c
 
 HEADERS += \
+    src/parts/image.h \
     src/parts/mesh.h \
     src/window.h \
     src/canvas.h \
     src/axes.h \
     src/parts/part.h \
     src/parts/gdsii.h \
-    src/parts/image.h \
     src/thirdparty/triangle/triangle.h
 
 # For compilation of Triangle library:

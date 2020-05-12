@@ -12,7 +12,8 @@ class Axes : protected QOpenGLFunctions {
 public:
 
     glm::vec3 location = glm::vec3(0.0f, 0.0f, 0.0f);
-    float radius = 250.0f;
+    //float radius = 250.0f;
+    float radius = 0.4f;
     QOpenGLVertexArrayObject* axis_VAO;
     QOpenGLBuffer* axis_VBO;
     QOpenGLVertexArrayObject* circle_VAO;

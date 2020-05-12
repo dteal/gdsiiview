@@ -6,9 +6,11 @@
 #include <QFileSystemWatcher>
 #include <QFileDialog> // open/save dialogs
 #include <QFileInfo>
+#include <QMessageBox>
 #include <QStandardPaths>
 #include <QImageWriter>
 #include <QMessageBox>
+#include <QException>
 #include <QDebug>
 #include <QEvent>
 #include <QMouseEvent> // mouse for orbit/pan
@@ -16,6 +18,7 @@
 #include <QString>
 #include <QPoint>
 #include <memory>
+#include <limits>
 #include <iostream>
 #include <sstream>
 #include "glm/glm.hpp"
@@ -49,6 +52,7 @@ public:
     // Background color displayed behind the loaded model.
     glm::vec3 background_color = glm::vec3(0.1f, 0.1f, 0.1f);
     Axes* axes;
+    bool show_axes = true;
 
     // One *.gdsiiview file can be loaded at a time; its filepath is stored
     // in (filepath). When (watcher) detects this file is changed, it is
@@ -67,14 +71,15 @@ public:
     void paintGL(); // main drawing function; called whenever window is updated
     bool eventFilter(QObject*, QEvent* event); // handle mouse, keyboard
     bool initialize_from_file(QString filepath); // load *.gdsiiview file
+    void emit_initialization_error(QString error);
 
 public slots:
     void update_file(QString filepath); // discard current and load new file
+    void center_model_origin();
+    void toggle_axes();
     void file_open(); // choose and open file with GUI dialog
     void file_save(); // choose and save rendered image with GUI dialog
     void view_fit(); // adjust zoom to fit model in screen (camera view)
-    void view_perspective(); // change to perspective camera view
-    void view_orthographic(); // change to orthographic camera view
     void view_orient(float theta, float phi); // change to given view
 };
 

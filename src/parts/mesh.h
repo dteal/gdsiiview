@@ -6,6 +6,7 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 
+#include <limits>
 #include <vector>
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -24,6 +25,7 @@ public:
     bool initialized = false;
     glm::vec3 color = glm::vec3(1.0f, 0.5f, 1.0f);
     glm::vec2 zbounds = glm::vec2(-1.0f, 1.0f);
+    std::vector<glm::vec3>mesh_points;
     int gdslayer = 1;
     bool export_stl = false;
     std::string stlfilepath = "";
@@ -39,22 +41,24 @@ const char* vertex_source = "                           \n\
     layout (location = 0) in vec3 pos;                  \n\
     layout (location = 1) in vec3 nor;                  \n\
     uniform mat4 transform;                             \n\
-    out vec3 normal;                                    \n\
+    uniform mat4 rotate;                                \n\
+    out vec4 normal;                                    \n\
     void main(){                                        \n\
         gl_Position = transform * vec4(pos.xyz, 1.0f);  \n\
-        normal = nor;//normalize(transform * vec4(nor.xyz, 1.0f)).xyz;                                   \n\
+        normal = rotate * vec4(nor.xyz, 1.0f);          \n\
     }";
 const char* fragment_source = "                         \n\
     #version 330 core                                   \n\
     uniform vec3 color;                                 \n\
-    in vec3 normal;                                     \n\
+    in vec4 normal;                                     \n\
     out vec4 FragColor;                                 \n\
     void main(){                                        \n\
-        vec3 light1 = vec3(0.70, 0.42, 0.58);           \n\
-        float diff1 = max(dot(light1, normal), 0.0);    \n\
-        vec3 light2 = vec3(-0.70, -0.23, -0.58);        \n\
-        float diff2 = max(dot(light2, normal), 0.0);    \n\
-        vec3 final = 2*(diff1+diff2*0.5) * color;       \n\
+        vec3 light1 = vec3(-0.70, 0.42, 0.58);          \n\
+        float diff1 = max(dot(light1, normal.xyz), 0.0);\n\
+        vec3 light2 = vec3(0.70, -0.42, -0.58);         \n\
+        float diff2 = max(dot(light2, normal.xyz), 0.0);\n\
+        float ambient = 0.1;                            \n\
+        vec3 final = (ambient+2*(diff1+diff2*0.5))*color;\n\
         FragColor = vec4(final.xyz, 1.0f);              \n\
     }";
 
@@ -76,6 +80,11 @@ void initialize(){
 
     GDSII_STRUCTURE* structure = gdsii->structure;
     while(structure != NULL){
+        if(QString(structure->name) == "$$$CONTEXT_INFO$$$"){
+            // skip KLayout PCELL structures
+            structure = structure->next;
+            continue;
+        }
         GDSII_ELEMENT* element = structure->element;
         while(element != NULL){
             if(element->layer == gdslayer && element->type == ELEMENT_TYPE_BOUNDARY){
@@ -169,8 +178,9 @@ void initialize(){
                     in.segmentlist[i*2+1] = (i+1) % num_points;
 
                     /*
-                    glm::vec2 hole_marker = p1 + p2 + normal_1b;
+                    glm::vec2 hole_marker = p1 + p2;
                     hole_marker *= 0.5;
+                    hole_marker += 0.5f*delta*normal_1b;
                     in.holelist[i*2] = hole_marker.x;
                     in.holelist[i*2+1] = hole_marker.y;
                     */
@@ -213,6 +223,12 @@ void initialize(){
                     for(unsigned int j=0; j<6*6; j++){
                         vertices.push_back(tris[j]);
                     }
+                }
+
+                // store points to help fit view later
+                for(unsigned int i=0; i<points.size(); i++){
+                    mesh_points.push_back(glm::vec3(points[i].x, points[i].y, z1));
+                    mesh_points.push_back(glm::vec3(points[i].x, points[i].y, z2));
                 }
                 // end polygon
             }
@@ -269,18 +285,37 @@ void deinitialize(){
 }
 
 // draw mesh
-void render(glm::mat4 view){
+void render(glm::mat4 view, glm::mat4 rotate){
     if(initialized){
         // TODO: rotate normals
         shader->bind();
         unsigned int matlocation = glGetUniformLocation(shader->programId(), "transform");
         glUniformMatrix4fv(matlocation, 1, GL_FALSE, glm::value_ptr(view));
+        unsigned int rotlocation = glGetUniformLocation(shader->programId(), "rotate");
+        glUniformMatrix4fv(rotlocation, 1, GL_FALSE, glm::value_ptr(rotate));
         unsigned int collocation = glGetUniformLocation(shader->programId(), "color");
         glUniform3fv(collocation, 1, glm::value_ptr(color));
         VAO->bind();
         glDrawArrays(GL_TRIANGLES, 0, num_vertices);
         VAO->release();
+        glm::vec4 test = glm::vec4(1.0f,0.0f,0.0f, 1.0f);
+        test = rotate*test;
     }
+}
+
+glm::vec4 get_bounds(glm::mat4 transform){
+    glm::vec4 bounds = glm::vec4(std::numeric_limits<float>::max(),
+            std::numeric_limits<float>::lowest(),
+            std::numeric_limits<float>::max(),
+            std::numeric_limits<float>::lowest());
+    for(unsigned int i=0; i<mesh_points.size(); i++){
+        glm::vec4 pos = transform*glm::vec4(mesh_points[i], 1.0f);
+        if(pos[0] < bounds[0]) bounds[0] = pos[0]; // xmin
+        if(pos[0] > bounds[1]) bounds[1] = pos[0]; // xmax
+        if(pos[1] < bounds[2]) bounds[2] = pos[1]; // ymin
+        if(pos[1] > bounds[3]) bounds[3] = pos[1]; // ymax
+    }
+    return bounds;
 }
 
 };

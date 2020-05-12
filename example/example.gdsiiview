@@ -1,3 +1,4 @@
+background: 0 0 0
 gdsii: "example.gds"
     comment: example part 1
     transform:
@@ -33,10 +34,10 @@ gdsii: "example.gds"
         color: 100 0 100
 image: "example.png"
     transform:
-        rotate: x 0
-        translate: 0 0 0
+        translate: 0 -200 10
+        rotate: z 45 
     geometry:
-        xbounds: -100 100
-        ybounds: -40 40
+        xbounds: -150 150
+        ybounds: -100 100
         zbounds: -10 0
         color: 100 0 0
