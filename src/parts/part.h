@@ -37,8 +37,10 @@ public:
     glm::mat4 rotate = glm::mat4(1.0f); // to help with normal rendering
 
 Part(){
+    /*
     watcher = new QFileSystemWatcher();
     connect(watcher, &QFileSystemWatcher::fileChanged, this, &Part::update_file);
+    */
 }
 
 void initialize(){
@@ -46,8 +48,8 @@ void initialize(){
         qDebug() << "Error: part filepath invalid: " << filepath;
         return;
     }
-    watcher->addPath(filepath);
-    watcher->files().removeDuplicates();
+    //watcher->addPath(filepath);
+    //watcher->files().removeDuplicates();
 
     if(type==PART_GDSII){
         gdsii = gdsii_create_gdsii();
@@ -79,7 +81,7 @@ void deinitialize(){
     if(initialized){
         deinitialize();
     }
-    delete watcher;
+    //delete watcher;
 }
 
 void render(glm::mat4 transform, glm::mat4 rotate){
@@ -108,9 +110,11 @@ glm::vec4 get_bounds(glm::mat4 transform){
     return bounds;
 }
 
-void update_file(){
-    deinitialize();
-    initialize();
+void update_file(QString filepath){
+    if(filepath == this->filepath){ // this function is called when any watched file is changed; make sure it's the right one
+        deinitialize();
+        initialize();
+    }
 }
 
 };

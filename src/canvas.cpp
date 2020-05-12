@@ -178,6 +178,8 @@ bool Canvas::initialize_from_file(QString filepath){
             }
             temppart = std::shared_ptr<Part>(new Part());
             temppart->filepath = QDir(relativepath).filePath(QString(commands[1].c_str()));
+            watcher->addPath(temppart->filepath);
+            watcher->files().removeDuplicates();
             if(commands[0] == "gdsii:"){ temppart->type = Part::PART_GDSII; }
             if(commands[0] == "image:"){ temppart->type = Part::PART_IMAGE; }
             temppart->created = true;
@@ -267,9 +269,11 @@ bool Canvas::initialize_from_file(QString filepath){
 }
 
 void Canvas::update_file(QString filepath){
-    if(filepath == this->filepath){ // this function is called when any watched file is changed; make sure it's the right one
-        initialize_from_file(filepath);
-    }
+    // reload when the entire *.gdsiiview file or any *.gds or image file is changed
+    // TODO: add fine-grained reloading
+    //if(filepath == this->filepath){ // this function is called when any watched file is changed; make sure it's the right one
+        initialize_from_file(this->filepath);
+    //}
 }
 void Canvas::file_open(){
     //QString filepath = QFileDialog::getOpenFileName(this, "Open *.gdsiiview File", "", "*.gdsiiview");
