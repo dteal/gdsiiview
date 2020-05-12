@@ -281,7 +281,7 @@ void Canvas::update_file(QString filepath){
 }
 void Canvas::file_open(){
     //QString filepath = QFileDialog::getOpenFileName(this, "Open *.gdsiiview File", "", "*.gdsiiview");
-    QString filepath = QFileDialog::getOpenFileName(this, "Open *.gdsiiview File", "../example", "*.gdsiiview");
+    QString filepath = QFileDialog::getOpenFileName(this, "Open *.gdsiiview File",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0], "*.gdsiiview");
     if(filepath != ""){ initialize_from_file(filepath); }}
 void Canvas::file_save(){
     QFileDialog save_dialog(this, "Save Image");
