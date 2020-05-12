@@ -108,7 +108,8 @@ void Canvas::emit_initialization_error(QString error){
 bool Canvas::initialize_from_file(QString filepath){
     if(filepath == ""){ return false; }
     if(!(QFileInfo::exists(filepath) && QFileInfo(filepath).isFile())){
-        emit_initialization_error("File not found: \""+filepath+"\".");
+        // gets confused when reloading file on Windows?
+        //emit_initialization_error("File not found: \""+filepath+"\".");
         return false;
     }
     // reset view when new file opened to avoid surprising behavior
