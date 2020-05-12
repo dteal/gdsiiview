@@ -15,7 +15,9 @@
 extern "C" {
     #define ANSI_DECLARATORS
     typedef double REAL;
-    typedef void VOID; // required on linux (maybe not Windows?)
+    #ifdef unix
+    typedef void VOID;
+    #endif
     #include "triangle.h"
 }
 

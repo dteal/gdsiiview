@@ -256,7 +256,7 @@ inline char* gdsii_parse_string(uint8_t* data, uint16_t length){
 
 inline bool gdsii_read(GDSII* gdsii, const char* filepath){
 
-    FILE* file = fopen(filepath, "r");
+    FILE* file = fopen(filepath, "rb");
     if(file == NULL){ perror("Error! Could not read GDS file."); return false; }
 
     // end of structure linked list
@@ -265,13 +265,16 @@ inline bool gdsii_read(GDSII* gdsii, const char* filepath){
 
     while(true){
 
+        //printf("readdata\n"); fflush(stdout);
         // read record header
         uint8_t buffer[4]; // header is always 32 bits long
         size_t read = fread(buffer, sizeof(uint8_t), 4, file);
+        //printf("read: %d\n", read); fflush(stdout);
         if(read==0){ break; } // reached EOF
 
         // create new record
         uint16_t length = (buffer[0] << 8) + buffer[1] - 4; // length of data, not entire record
+        //printf("LENGTH: %d\n", length); fflush(stdout);
         uint8_t record_type = buffer[2];
         uint8_t data_type = buffer[3];
         //std::cout << "RECORD: length: " << (int)(length+4) << " type: " << (int)record_type << " data: " << (int)data_type << std::endl;
@@ -285,18 +288,18 @@ inline bool gdsii_read(GDSII* gdsii, const char* filepath){
 
         switch(record_type){
             case RECORD_TYPE_UNITS:
-                //printf("UNITS\n");
+                //printf("UNITS\n"); fflush(stdout);
                 //std::cout << (int)data_type << std::endl;
                 break;
             case RECORD_TYPE_BGNSTR: // create new structure
-                //printf("STRUCTURE\n");
+                //printf("STRUCTURE\n"); fflush(stdout);
                 (*structure) = gdsii_create_structure();
                 element = &((**structure).element);
                 break;
             case RECORD_TYPE_ENDSTR: // move marker to new end of linked list
                 // TODO
                 // layers named "$$$CONTEXT_INFO$$$ may be used to store additional data (PCell?) (https://www.klayout.de/forum/discussion/1026/very-important-gds-exported-from-k-layout-not-working-on-cadence-at-foundry)
-                //printf("ENDSTRUCT\n");
+                //printf("ENDSTRUCT\n"); fflush(stdout);
                 structure = &((**structure).next);
                 break;
             case RECORD_TYPE_STRNAME: // assume data is null-terminated
@@ -304,36 +307,36 @@ inline bool gdsii_read(GDSII* gdsii, const char* filepath){
                 //std::cout << (**structure).name << std::endl;
                 break;
             case RECORD_TYPE_ENDEL: // end element
-                //printf("\tENDEL\n");
+                //printf("\tENDEL\n"); fflush(stdout);
                 element = &((**element).next);
                 break;
             case RECORD_TYPE_BOUNDARY:
-                //printf("\tBOUNDARY\n");
+                //printf("\tBOUNDARY\n"); fflush(stdout);
                 (*element) = gdsii_create_element();
                 (**element).type = ELEMENT_TYPE_BOUNDARY;
                 break;
             case RECORD_TYPE_PATH:
-                //printf("\tPATH\n");
+                //printf("\tPATH\n"); fflush(stdout);
                 (*element) = gdsii_create_element();
                 (**element).type = ELEMENT_TYPE_PATH;
                 break;
             case RECORD_TYPE_SREF:
-                //printf("\tSREF\n");
+                //printf("\tSREF\n"); fflush(stdout);
                 (*element) = gdsii_create_element();
                 (**element).type = ELEMENT_TYPE_SREF;
                 break;
             case RECORD_TYPE_AREF:
-                //printf("\tAREF\n");
+                //printf("\tAREF\n"); fflush(stdout);
                 (*element) = gdsii_create_element();
                 (**element).type = ELEMENT_TYPE_AREF;
                 break;
             case RECORD_TYPE_BOX:
-                //printf("\tBOX\n");
+                //printf("\tBOX\n"); fflush(stdout);
                 (*element) = gdsii_create_element();
                 (**element).type = ELEMENT_TYPE_BOX;
                 break;
             case RECORD_TYPE_XY:
-                //printf("\t\tXY\n");
+                //printf("\t\tXY\n"); fflush(stdout);
                 if(data_type == DATA_TYPE_INT32){
                     GDSII_POINT** point = &((**element).point);
                     std::vector<int32_t>coordinates = gdsii_parse_int32(data, length);
@@ -347,7 +350,7 @@ inline bool gdsii_read(GDSII* gdsii, const char* filepath){
                 }
                 break;
             case RECORD_TYPE_LAYER:
-                //printf("\tLAYER\n");
+                //printf("\t\tLAYER\n"); fflush(stdout);
                 if(data_type == DATA_TYPE_INT16){
                     std::vector<int16_t>points = gdsii_parse_int16(data, length);
                     (**element).layer = points[0];
