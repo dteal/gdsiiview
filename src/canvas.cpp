@@ -184,6 +184,7 @@ bool Canvas::initialize_from_file(QString filepath){
             if(commands[0] == "image:"){ temppart->type = Part::PART_IMAGE; }
             temppart->created = true;
         }else if(commands[0] == "comment:"){ // ignore comments
+        }else if(commands[0][0] == '#'){ // these are also comments
         }else if(commands[0] == "transform:"){ // really just a placeholder; ignore this line too
         }else if(commands[0] == "geometry:"){ // same
         }else if(commands[0] == "layer:"){
