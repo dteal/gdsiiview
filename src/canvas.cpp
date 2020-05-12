@@ -187,6 +187,8 @@ bool Canvas::initialize_from_file(QString filepath){
         }else if(commands[0][0] == '#'){ // these are also comments
         }else if(commands[0] == "transform:"){ // really just a placeholder; ignore this line too
         }else if(commands[0] == "geometry:"){ // same
+        }else if(commands[0] == "hidden:"){
+            if(commands[1]=="true"){ temppart->hidden = true; }
         }else if(commands[0] == "layer:"){
             if(tempmesh->created){ temppart->meshes.push_back(tempmesh); }
             tempmesh = std::shared_ptr<Mesh>(new Mesh());

@@ -24,6 +24,7 @@ public:
     part_type type;
     bool initialized = false;
     bool created = false;
+    bool hidden = false;
 
     QString filepath = "";
     QString stlfilepath = "";
@@ -86,6 +87,7 @@ void deinitialize(){
 
 void render(glm::mat4 transform, glm::mat4 rotate){
     if(!initialized){ return; }
+    if(hidden){ return; }
     if(type==PART_GDSII){
         for(unsigned int i=0; i<meshes.size(); i++){
             meshes[i]->render(transform * this->transform, rotate*this->rotate);
