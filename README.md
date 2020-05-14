@@ -4,7 +4,7 @@ Displays GDSII files as 3D geometry.
 
 Layers of potentially multiple GDSII files, according to specifications in a configuration file, are triangulated, extruded to a certain thickness, and positioned in 3D space. This is intended to help visualize multi-die MEMS structures with complex (but rectilinear) 3D geometry in real time while using a traditional 2D editor in parallel.
 
-NOTE: This program is still under development, and currently only supports GDSII polygons (notably, paths and cells are NOT displayed (properly)). Certain other features (e.g., units other than 1000 database units = 1um) are also not yet implemented.
+NOTE: This program is still under development, and currently only supports GDSII polygons (notably, paths and cells are NOT displayed (properly)). Certain other features (e.g., units other than 1000 database units = 1um) are also not yet implemented. In addition, there is some trouble properly rendering polygons with very complex holes in their interior due to their overlapping edges.
 
 ![screenshot](example/example_screenshot.png?raw=true "Example Screenshot")
 
@@ -22,7 +22,7 @@ The window menubar contains several helpful commands. "View->Fit" zooms and repo
 
 "File->Export Image..." exports the current window to an image file. This is useful for, e.g., making figures for later use. The image file resolution is the current size of the window. The background color can be defined in the `*.gdsiiview` file.
 
-Finally, "File->Open..." opens a `*.gdsiiview` file, and both the `*.gdsiiview` file and referenced files (i.e., GDSII and image files) are watched. If any of the above are changed (e.g., edited in a 2D layout editor), the files are reloaded and the 3D view updated. NOTE: this currently breaks after 5-20 reloads on Windows for unknown reasons. If the file fails to update, just reopen the file or restart the program.
+Finally, "File->Open..." opens a `*.gdsiiview` file, and both the `*.gdsiiview` file and referenced files (i.e., GDSII and image files) are watched. If any of the above are changed (e.g., edited in a 2D layout editor), the files are reloaded and the 3D view updated. NOTE: this currently breaks after 5-20 reloads on Windows for unknown reasons. If the file fails to update, reopen the file or restart the program.
 
 ## Compilation
 
@@ -55,7 +55,7 @@ To compile and run the program, click the green triangle (without the bug; that 
 
 If compilation fails, or the gdsiiview window doesn't open, click the "Compile Output" or "Issues" buttons on the bottom bar of the Qt Creator window for more information.
 
-Finally, it is easiest to run this program in this same way every time (i.e., open Qt Creator and press the green triangle). It may be possible to run the program directly (instead of going through Qt Creator) by running the compiled executable in the compilation folder chosen when first opening the project. This works on Linux and possibly MacOS, but on Windows, the files "Qt5Core.dll", "Qt5GUI.dll", and "Qt5Widgets.dll" from the Qt installation directory (e.g., `C:\Qt\5.14.2\mingw73_64\bin`) and the folder "plugins" from the same (e.g., `C:\Qt\5.14.2\mingw73_64\plugins`) should be copied to the same folder as the executable first.
+Finally, it is easiest to run this program in this same way every time (i.e., open Qt Creator and press the green triangle). It may be possible to run the program directly (instead of going through Qt Creator) by running the compiled executable in the compilation folder chosen when first opening the project. This works on Linux and possibly MacOS, but on Windows, the files "Qt5Core.dll", "Qt5GUI.dll", and "Qt5Widgets.dll" from the Qt installation directory (e.g., `C:\Qt\5.14.2\mingw73_64\bin`) and the folder "plugins" from the same (e.g., `C:\Qt\5.14.2\mingw73_64\plugins`) should be copied to the same folder as the executable first (though this still results in several errors).
 
 Finally, there are still many bugs and yet-to-be-implemented features in the program; let me (Daniel Teal) know if you run into problems so I can try to help fix them.
 
