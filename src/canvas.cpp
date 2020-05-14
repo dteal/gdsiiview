@@ -5,6 +5,7 @@ Canvas::Canvas() {
     format.setDepthBufferSize(24);
     format.setVersion(3, 3);
     format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setSamples(4); // enable antialiasing
     setFormat(format);
 
     installEventFilter(this);
