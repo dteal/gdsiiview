@@ -110,6 +110,8 @@ void initialize(QString filepath){
     image->load(filepath);
     *image = image->mirrored(mirror_horizontal, mirror_vertical);
     texture = new QOpenGLTexture(*image);
+    texture->setMagnificationFilter(QOpenGLTexture::Nearest);
+    texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
 
     // TODO: assert lower < higher bounds
 
