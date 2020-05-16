@@ -16,6 +16,8 @@ SOURCES += \
     src/thirdparty/triangle/triangle.c
 
 HEADERS += \
+    src/gdsii/gdsii_types.h \
+    src/gdsii/gdsii_parse.h \
     src/parts/image.h \
     src/parts/mesh.h \
     src/window.h \

@@ -3,3 +3,4 @@ gdsiiview.pro.user
 
 # exclude compiled binaries
 bin/*
+src/gdsii/gdsii_test
